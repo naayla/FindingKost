@@ -1,17 +1,19 @@
-# tugas_kelompok
+# Finding Kost - Aplikasi Pencarian & Pengelolaan Kos Kampus
 
-A new Flutter project.
+Aplikasi Flutter frontend untuk pencarian, pemesanan, dan pengelolaan kos terdekat di sekitar kampus (USU Medan). Proyek ini disusun untuk memenuhi **Tugas & Target UTS Pemrograman Mobile**.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 Petunjuk Setup & Cara Menjalankan
 
-A few resources to get you started if this is your first Flutter project:
+### Persyaratan Sistem
+* **Flutter SDK**: ^3.13.2[cite: 14]
+* **Dart SDK**: ^3.13.2[cite: 14]
+* **Editor**: Visual Studio Code / Android Studio
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Langkah-Langkah Menjalankan Proyek
+1. **Ekstrak/Clone Proyek**:
+   Buka folder proyek di Terminal / Command Prompt.
+2. **Unduh Dependencies**:
+   ```bash
+   flutter pub get
