@@ -1,19 +1,10 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tugas_kelompok/main.dart';
 
 void main() {
-  testWidgets('dark mode can be toggled from the login screen', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('dark mode can be toggled from login', (tester) async {
     await tester.pumpWidget(const FindingKostApp());
 
     expect(
@@ -30,8 +21,8 @@ void main() {
     );
   });
 
-  testWidgets('chatbot replies and complaint can be submitted', (
-    WidgetTester tester,
+  testWidgets('chatbot answers and complaint form validates and submits', (
+    tester,
   ) async {
     await tester.pumpWidget(const FindingKostApp());
     await tester.tap(find.text('Masuk'));
