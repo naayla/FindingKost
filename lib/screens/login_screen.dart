@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/app_state.dart';
-import 'home_screen.dart';
+import '../widgets/app_logo.dart';
+import 'main_navigation_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -12,8 +13,8 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isDarkMode = context.watch<AppState>().isDarkMode;
+
     return Scaffold(
-      backgroundColor: colors.surface,
       appBar: AppBar(
         actions: [
           IconButton(
@@ -24,146 +25,86 @@ class LoginScreen extends StatelessWidget {
               isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
             ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-              // Icon Logo Home Blue
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(
-                  Icons.home_work_rounded,
-                  size: 64,
-                  color: colors.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Finding Kost',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: colors.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Temukan tempat kos impianmu dengan mudah',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 36),
-              // Field Email
-              TextFormField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(
-                    Icons.email_outlined,
-                    color: Colors.grey,
-                  ),
-                  hintText: 'Email',
-                  filled: true,
-                  fillColor: colors.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Field Kata Sandi
-              TextFormField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(
-                    Icons.lock_outline,
-                    color: Colors.grey,
-                  ),
-                  hintText: 'Kata Sandi',
-                  filled: true,
-                  fillColor: colors.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Tombol Masuk
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primaryContainer,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeScreen(),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Masuk',
-                    style: TextStyle(
-                      color: colors.onPrimaryContainer,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const Spacer(),
-              // Link Daftar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text('Belum punya akun? '),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterScreen(),
+                  const SizedBox(height: 24),
+                  const Center(child: AppLogo()),
+                  const SizedBox(height: 40),
+                  Text(
+                    'Selamat datang kembali',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.7,
                         ),
-                      );
-                    },
-                    child: Text(
-                      'Daftar Sekarang',
-                      style: TextStyle(
-                        color: colors.primary,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    'Masuk dan temukan ruang yang terasa seperti rumah.',
+                    style: TextStyle(
+                      color: colors.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 26),
+                  TextField(
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.mail_outline_rounded),
+                      labelText: 'Email',
+                      hintText: 'nama@email.com',
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.lock_outline_rounded),
+                      labelText: 'Kata sandi',
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () => Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const MainNavigationScreen(),
                       ),
                     ),
+                    child: const Text('Masuk'),
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Belum punya akun?',
+                        style: TextStyle(color: colors.onSurfaceVariant),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => const RegisterScreen(),
+                          ),
+                        ),
+                        child: const Text('Daftar sekarang'),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),

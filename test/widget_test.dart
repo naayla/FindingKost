@@ -55,4 +55,28 @@ void main() {
     expect(find.text('Laporan sesi ini'), findsOneWidget);
     expect(find.textContaining('dicatat selama sesi ini'), findsOneWidget);
   });
+
+  testWidgets('bottom navigation opens categories and editable profile', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const FindingKostApp());
+    await tester.tap(find.text('Masuk'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NavigationBar), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('navigation-categories')));
+    await tester.pumpAndSettle();
+    expect(find.text('Atur sesuai kebutuhanmu'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('navigation-profile')));
+    await tester.pumpAndSettle();
+    expect(find.text('Nayla Syifa Tanjung'), findsOneWidget);
+
+    await tester.tap(find.text('Edit profil'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Nayla Syifa');
+    await tester.tap(find.text('Simpan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Nayla Syifa'), findsOneWidget);
+  });
 }
