@@ -1,126 +1,74 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/app_logo.dart';
+
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF9F9FB),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Buat Akun Baru',
-          style: TextStyle(color: Colors.black, fontSize: 18),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Buat akun')),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Daftar Akun',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2196F3),
-                ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 28),
+          children: [
+            const AppLogo(compact: true),
+            const SizedBox(height: 24),
+            Text(
+              'Mulai perjalananmu',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.7,
+                  ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              'Buat akun Finding Kost untuk menemukan tempat tinggal yang pas.',
+              style: TextStyle(color: colors.onSurfaceVariant, height: 1.5),
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.person_outline_rounded),
+                labelText: 'Nama lengkap',
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'Lengkapi data di bawah ini untuk mendaftar',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.mail_outline_rounded),
+                labelText: 'Email',
               ),
-              const SizedBox(height: 28),
-              // Nama Lengkap
-              TextFormField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.person_outline, color: Colors.grey),
-                  hintText: 'Nama Lengkap',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              obscureText: true,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.lock_outline_rounded),
+                labelText: 'Kata sandi',
+                helperText: 'Gunakan minimal 8 karakter.',
               ),
-              const SizedBox(height: 16),
-              // Email
-              TextFormField(
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
-                  hintText: 'Email',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Kata Sandi
-              TextFormField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                  hintText: 'Kata Sandi',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.black26),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
-              // Tombol Daftar
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF3EDF7),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Daftar',
-                    style: TextStyle(
-                      color: Color(0xFF6750A4),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Daftar'),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Dengan mendaftar, kamu menyetujui ketentuan penggunaan aplikasi.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: colors.onSurfaceVariant),
+            ),
+          ],
         ),
       ),
     );

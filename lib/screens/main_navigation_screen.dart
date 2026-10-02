@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'home_screen.dart';
 import 'category_screen.dart';
 import 'profile_screen.dart';
@@ -24,35 +25,37 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
+      body: IndexedStack(index: _currentIndex, children: _screens),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.teal,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_filled),
+        destinations: const [
+          NavigationDestination(
+            key: ValueKey('navigation-home'),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
             label: 'Beranda',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.category_rounded),
+          NavigationDestination(
+            key: ValueKey('navigation-categories'),
+            icon: Icon(Icons.grid_view_outlined),
+            selectedIcon: Icon(Icons.grid_view_rounded),
             label: 'Kategori',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
+          NavigationDestination(
+            key: ValueKey('navigation-profile'),
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
             label: 'Profil',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_rounded),
+          NavigationDestination(
+            key: ValueKey('navigation-settings'),
+            icon: Icon(Icons.tune_rounded),
+            selectedIcon: Icon(Icons.tune_rounded),
             label: 'Pengaturan',
           ),
         ],
