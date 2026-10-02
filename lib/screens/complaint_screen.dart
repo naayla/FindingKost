@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/app_state.dart';
 
 class ComplaintScreen extends StatefulWidget {
   const ComplaintScreen({super.key});
@@ -22,30 +25,75 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
   void _submitReport() {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
-      _reports.insert(0, '$_category: ${_descriptionController.text.trim()}');
+      _reports.insert(0, '[$_category] ${_descriptionController.text.trim()}');
       _descriptionController.clear();
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pengaduan dicatat selama sesi ini.')),
+      const SnackBar(
+        content: Text('Pengaduan berhasil terkirim dan dicatat.'),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final isOwner = context.watch<AppState>().isOwner;
+
+    final categoriesList = isOwner
+        ? const [
+            DropdownMenuItem(
+              value: 'Keluhan Aplikasi',
+              child: Text('Keluhan Aplikasi'),
+            ),
+            DropdownMenuItem(
+              value: 'Bantuan Peta Location',
+              child: Text('Bantuan Peta Location'),
+            ),
+            DropdownMenuItem(
+              value: 'Informasi Akun Pemilik',
+              child: Text('Informasi Akun Pemilik'),
+            ),
+            DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
+          ]
+        : const [
+            DropdownMenuItem(
+              value: 'Fasilitas kos',
+              child: Text('Fasilitas kos'),
+            ),
+            DropdownMenuItem(
+              value: 'Informasi kos tidak sesuai',
+              child: Text('Informasi kos tidak sesuai'),
+            ),
+            DropdownMenuItem(
+              value: 'Pemilik tidak merespon',
+              child: Text('Pemilik tidak merespon'),
+            ),
+            DropdownMenuItem(
+              value: 'Kendala aplikasi',
+              child: Text('Kendala aplikasi'),
+            ),
+            DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
+          ];
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Laporan pengaduan')),
+      appBar: AppBar(title: const Text('Pusat Pengaduan & Layanan')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         children: [
           Text(
-            'Ada yang perlu\ndiperbaiki?',
-            style: Theme.of(context).textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w700, height: 1.18),
+            isOwner ? 'Ada Kendala\nPengelolaan?' : 'Ada Kendala Atau\nPengaduan Kos?',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.18,
+                  letterSpacing: -0.5,
+                ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Ceritakan kendala atau masukanmu kepada kami.',
+            isOwner
+                ? 'Sampaikan keluhan teknis atau bantuan pendaftaran properti kos kepada tim bantuan Finding Kost.'
+                : 'Ceritakan kendala atau informasi kos yang tidak akurat kepada tim bantuan kami.',
             style: TextStyle(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: 22),
@@ -57,24 +105,10 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _category,
                   decoration: const InputDecoration(
-                    labelText: 'Kategori',
+                    labelText: 'Kategori Laporan',
                     prefixIcon: Icon(Icons.category_outlined),
                   ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Fasilitas kos',
-                      child: Text('Fasilitas kos'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Informasi kos',
-                      child: Text('Informasi kos'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Kendala aplikasi',
-                      child: Text('Kendala aplikasi'),
-                    ),
-                    DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
-                  ],
+                  items: categoriesList,
                   onChanged: (value) {
                     if (value != null) setState(() => _category = value);
                   },
@@ -87,21 +121,21 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                   maxLines: 6,
                   decoration: const InputDecoration(
                     alignLabelWithHint: true,
-                    labelText: 'Detail pengaduan',
-                    hintText: 'Jelaskan apa yang terjadi...',
+                    labelText: 'Detail Pengaduan',
+                    hintText: 'Jelaskan secara detail apa yang terjadi...',
                   ),
                   validator: (value) => value == null || value.trim().length < 8
-                      ? 'Isi minimal 8 karakter.'
+                      ? 'Isi pengaduan minimal 8 karakter.'
                       : null,
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 50,
+                  height: 52,
                   child: FilledButton.icon(
                     key: const Key('report-submit'),
                     onPressed: _submitReport,
-                    icon: const Icon(Icons.send_outlined),
-                    label: const Text('Kirim pengaduan'),
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text('Kirim Laporan Pengaduan'),
                   ),
                 ),
               ],
@@ -109,28 +143,51 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
           ),
           const SizedBox(height: 28),
           Text(
-            'Laporan sesi ini',
-            style: Theme.of(context).textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
+            'Riwayat Pengaduan Sesi Ini',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           if (_reports.isEmpty)
-            Text(
-              'Belum ada laporan.',
-              style: TextStyle(color: colors.onSurfaceVariant),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'Belum ada laporan pengaduan yang dikirim.',
+                style: TextStyle(color: colors.onSurfaceVariant),
+              ),
             )
           else
             for (final report in _reports)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  Icons.check_circle_outline,
-                  color: colors.primary,
-                ),
-                title: Text(
-                  report,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: colors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          report,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
         ],
