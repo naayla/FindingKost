@@ -25,28 +25,35 @@ class _FindingKostAppView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (context, appState, _) {
-        final lightColors = ColorScheme.fromSeed(
-          seedColor: const Color(0xFF557C62),
-          brightness: Brightness.light,
-          surface: const Color(0xFFF7F8F5),
-        );
-        final darkColors = ColorScheme.fromSeed(
-          seedColor: const Color(0xFF91B99B),
-          brightness: Brightness.dark,
-          surface: const Color(0xFF151A17),
-        );
+    final isDarkMode = context.select<AppState, bool>((s) => s.isDarkMode);
 
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Finding Kost',
-          theme: _buildTheme(lightColors),
-          darkTheme: _buildTheme(darkColors),
-          themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: const LoginScreen(),
-        );
-      },
+    final lightColors = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF286355),
+      brightness: Brightness.light,
+      surface: const Color(0xFFF8F7F3),
+    ).copyWith(
+      primary: const Color(0xFF286355),
+      secondary: const Color(0xFFB76E4A),
+      tertiary: const Color(0xFFC79B56),
+    );
+
+    final darkColors = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF8BC4AD),
+      brightness: Brightness.dark,
+      surface: const Color(0xFF141B18),
+    ).copyWith(
+      primary: const Color(0xFF8BC4AD),
+      secondary: const Color(0xFFE0A17E),
+      tertiary: const Color(0xFFE1BD75),
+    );
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Finding Kost',
+      theme: _buildTheme(lightColors),
+      darkTheme: _buildTheme(darkColors),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: const LoginScreen(),
     );
   }
 }
