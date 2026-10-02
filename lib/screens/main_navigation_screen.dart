@@ -22,24 +22,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
-    final isOwner = appState.isOwner;
+    final isOwner = context.select<AppState, bool>((s) => s.isOwner);
 
-    // Define navigation items based on User Role
+    // Define navigation items based on User Role with explicit keys
     final List<Widget> screens = isOwner
-        ? [
-            const HomeScreen(),
-            const FormItemScreen(),
-            const MapScreen(),
-            const CategoryScreen(),
-            const ProfileScreen(),
+        ? const [
+            HomeScreen(key: ValueKey('owner-home')),
+            FormItemScreen(key: ValueKey('owner-form')),
+            MapScreen(key: ValueKey('owner-map')),
+            CategoryScreen(key: ValueKey('owner-category')),
+            ProfileScreen(key: ValueKey('owner-profile')),
           ]
-        : [
-            const HomeScreen(),
-            const MapScreen(),
-            const FavoritesScreen(),
-            const ProfileScreen(),
-            const SettingsScreen(),
+        : const [
+            HomeScreen(key: ValueKey('seeker-home')),
+            MapScreen(key: ValueKey('seeker-map')),
+            FavoritesScreen(key: ValueKey('seeker-favorites')),
+            ProfileScreen(key: ValueKey('seeker-profile')),
+            SettingsScreen(key: ValueKey('seeker-settings')),
           ];
 
     final List<NavigationDestination> destinations = isOwner
@@ -112,6 +111,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     return Scaffold(
       body: IndexedStack(
+        key: ValueKey('main-navigation-stack-$isOwner'),
         index: safeIndex,
         children: screens,
       ),
