@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController(text: 'nana@example.com');
   final _passwordController = TextEditingController(text: '12345678');
   UserRole _selectedRole = UserRole.pencariKost;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -27,7 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _loadSavedAccount();
   }
 
-  // Membaca data tersimpan dari SharedPreferences jika ada
   Future<void> _loadSavedAccount() async {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString('user_email');
@@ -54,7 +54,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final appState = context.read<AppState>();
     final prefs = await SharedPreferences.getInstance();
 
-    // Mengambil nama tersimpan jika ada, atau gunakan nilai bawaan
     final savedName = prefs.getString('user_name');
     final inputEmail = _emailController.text.trim();
 
@@ -99,175 +98,305 @@ class _LoginScreenState extends State<LoginScreen> {
     final colors = Theme.of(context).colorScheme;
     final isDarkMode = context.watch<AppState>().isDarkMode;
 
+    // Warna teks utama di luar card agar selalu kontras & terbaca di atas gradasi
+    final headerTextColor = isDarkMode ? Colors.white : const Color(0xFF1E293B);
+    final subtextColor = isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            key: const Key('theme-toggle'),
-            tooltip: 'Ganti tema',
-            onPressed: context.read<AppState>().toggleDarkMode,
-            icon: Icon(
-              isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-            ),
+      body: Container(
+        // Background Gradasi Pastel Lembut (Sage Green -> Warm Cream -> Off-White)
+        decoration: BoxDecoration(
+          gradient: isDarkMode
+              ? LinearGradient(
+            colors: [
+              colors.surface,
+              colors.surfaceContainer,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          )
+              : const LinearGradient(
+            colors: [
+              Color(0xFFE2EBE4), // Soft Sage Light
+              Color(0xFFF7F0E6), // Warm Cream / Sand Light
+              Color(0xFFFAF8F5), // Soft Off-White / Ivory
+            ],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Center(child: AppLogo()),
-                  const SizedBox(height: 32),
-                  Text(
-                    'Selamat datang kembali',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.7,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Pilih peranmu untuk masuk ke aplikasi Finding Kost.',
-                    style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Role Choice Segmented Control
-                  SegmentedButton<UserRole>(
-                    segments: const [
-                      ButtonSegment<UserRole>(
-                        value: UserRole.pencariKost,
-                        label: Text('Pencari Kost'),
-                        icon: Icon(Icons.person_search_rounded),
-                      ),
-                      ButtonSegment<UserRole>(
-                        value: UserRole.pemilikKost,
-                        label: Text('Pemilik Kost'),
-                        icon: Icon(Icons.real_estate_agent_rounded),
-                      ),
-                    ],
-                    selected: {_selectedRole},
-                    onSelectionChanged: (newSelection) {
-                      setState(() {
-                        _selectedRole = newSelection.first;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.mail_outline_rounded),
-                      labelText: 'Email',
-                      hintText: 'nama@email.com',
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline_rounded),
-                      labelText: 'Kata sandi',
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  FilledButton(
-                    onPressed: () {
-                      _loginAsRole(_selectedRole);
-                    },
-                    child: Text('Masuk sebagai ${_selectedRole.displayName}'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Quick Demo Login Section
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: colors.outlineVariant.withValues(alpha: 0.5),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Custom App Bar transparan agar menyatu dengan gradasi
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      key: const Key('theme-toggle'),
+                      tooltip: 'Ganti tema',
+                      onPressed: context.read<AppState>().toggleDarkMode,
+                      icon: Icon(
+                        isDarkMode
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
+                        color: headerTextColor,
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Coba Masuk Cepat (Demo):',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: colors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  _loginAsRole(UserRole.pencariKost);
-                                },
-                                icon: const Icon(Icons.person_outline, size: 16),
-                                label: const Text('Pencari Kost'),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  _loginAsRole(UserRole.pemilikKost);
-                                },
-                                icon: const Icon(Icons.home_work_outlined, size: 16),
-                                label: const Text('Pemilik Kost'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'Belum punya akun?',
-                        style: TextStyle(color: colors.onSurfaceVariant),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (_) => const RegisterScreen(),
-                            ),
-                          ).then((_) {
-                            _loadSavedAccount();
-                          });
-                        },
-                        child: const Text('Daftar sekarang'),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Logo di posisi atas dengan penyesuaian ukuran
+                          Transform.scale(
+                            scale: 0.85,
+                            alignment: Alignment.centerLeft,
+                            child: const AppLogo(),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Teks "Selamat datang finder" dengan warna tajam
+                          Text(
+                            'Selamat datang finder',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: headerTextColor,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Subjudul Rata Kiri
+                          SizedBox(
+                            width: 280,
+                            child: Text(
+                              'Pilih peranmu untuk masuk ke aplikasi Finding Kost.',
+                              style: TextStyle(
+                                color: subtextColor,
+                                fontSize: 14,
+                                height: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Card Kontainer Form dengan latar solid & bayangan lembut
+                          Card(
+                            elevation: isDarkMode ? 1 : 4,
+                            shadowColor: Colors.black.withOpacity(0.08),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            color: isDarkMode
+                                ? colors.surfaceContainer
+                                : Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Segmented Button Peran
+                                  SizedBox(
+                                    height: 50,
+                                    child: SegmentedButton<UserRole>(
+                                      style: ButtonStyle(
+                                        shape: WidgetStateProperty.all(
+                                          RoundedRectangleBorder(
+                                            borderRadius:
+                                            BorderRadius.circular(25),
+                                          ),
+                                        ),
+                                        textStyle: WidgetStateProperty.all(
+                                          const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      segments: const [
+                                        ButtonSegment<UserRole>(
+                                          value: UserRole.pencariKost,
+                                          label: Text('Pencari Kost'),
+                                          icon: Icon(Icons.home_rounded,
+                                              size: 18),
+                                        ),
+                                        ButtonSegment<UserRole>(
+                                          value: UserRole.pemilikKost,
+                                          label: Text('Pemilik Kost'),
+                                          icon: Icon(Icons.home_outlined,
+                                              size: 18),
+                                        ),
+                                      ],
+                                      selected: {_selectedRole},
+                                      onSelectionChanged: (newSelection) {
+                                        setState(() {
+                                          _selectedRole = newSelection.first;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Input Email
+                                  Text(
+                                    'Email',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  TextField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    style: const TextStyle(fontSize: 14),
+                                    decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.symmetric(
+                                        vertical: 14,
+                                        horizontal: 16,
+                                      ),
+                                      prefixIcon: Icon(
+                                          Icons.mail_outline_rounded,
+                                          size: 20),
+                                      hintText: 'Masukkan email anda',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  // Input Kata Sandi
+                                  Text(
+                                    'Kata sandi',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  TextField(
+                                    controller: _passwordController,
+                                    obscureText: _obscurePassword,
+                                    style: const TextStyle(fontSize: 14),
+                                    decoration: InputDecoration(
+                                      contentPadding:
+                                      const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                        horizontal: 16,
+                                      ),
+                                      prefixIcon: const Icon(
+                                          Icons.lock_outline_rounded,
+                                          size: 20),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility_off_outlined
+                                              : Icons.visibility_outlined,
+                                          size: 20,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _obscurePassword =
+                                            !_obscurePassword;
+                                          });
+                                        },
+                                      ),
+                                      hintText: 'Masukkan sandi anda',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Tombol Masuk Utama
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 50,
+                                    child: FilledButton(
+                                      onPressed: () {
+                                        _loginAsRole(_selectedRole);
+                                      },
+                                      style: FilledButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(25),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Masuk sebagai ${_selectedRole.displayName}',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Opsi Daftar
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Belum punya akun? ',
+                                        style: TextStyle(
+                                          color: colors.onSurfaceVariant,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute<void>(
+                                              builder: (_) =>
+                                              const RegisterScreen(),
+                                            ),
+                                          ).then((_) {
+                                            _loadSavedAccount();
+                                          });
+                                        },
+                                        child: Text(
+                                          'Daftar sekarang',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: colors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
