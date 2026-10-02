@@ -20,8 +20,29 @@ class _FormItemScreenState extends State<FormItemScreen> {
   late final TextEditingController _locationController;
   late final TextEditingController _priceController;
   late final TextEditingController _imageController;
+  late final TextEditingController _latController;
+  late final TextEditingController _lngController;
+  late final TextEditingController _ownerNameController;
+  late final TextEditingController _ownerPhoneController;
+  late final TextEditingController _descriptionController;
+
   late double _rating;
+  late bool _isAvailable;
   String? _selectedCategoryId;
+  late List<String> _selectedFacilities;
+
+  static const List<String> _availableFacilityOptions = [
+    'WiFi',
+    'AC',
+    'Kamar Mandi Dalam',
+    'Kasur',
+    'Lemari',
+    'Parkir',
+    'TV',
+    'Dapur',
+    'CCTV',
+    'Water Heater',
+  ];
 
   @override
   void initState() {
@@ -31,8 +52,29 @@ class _FormItemScreenState extends State<FormItemScreen> {
     _locationController = TextEditingController(text: item?.location ?? '');
     _priceController = TextEditingController(text: item?.price ?? '');
     _imageController = TextEditingController(text: item?.imageUrl ?? '');
+    _latController = TextEditingController(
+      text: (item?.latitude ?? 3.5651).toString(),
+    );
+    _lngController = TextEditingController(
+      text: (item?.longitude ?? 98.6538).toString(),
+    );
+    _ownerNameController = TextEditingController(
+      text: item?.ownerName ?? 'H. Rahmad S.T.',
+    );
+    _ownerPhoneController = TextEditingController(
+      text: item?.ownerPhone ?? '+6281234567890',
+    );
+    _descriptionController = TextEditingController(
+      text: item?.description ??
+          'Kos bersih, aman, dan nyaman berlokasi strategis dekat fasilitas umum.',
+    );
+
     _rating = item?.rating ?? 4.5;
+    _isAvailable = item?.isAvailable ?? true;
     _selectedCategoryId = item?.categoryId;
+    _selectedFacilities = List.from(
+      item?.facilities ?? ['WiFi', 'Kamar Mandi Dalam', 'AC', 'Kasur'],
+    );
   }
 
   @override
@@ -41,6 +83,11 @@ class _FormItemScreenState extends State<FormItemScreen> {
     _locationController.dispose();
     _priceController.dispose();
     _imageController.dispose();
+    _latController.dispose();
+    _lngController.dispose();
+    _ownerNameController.dispose();
+    _ownerPhoneController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -49,14 +96,13 @@ class _FormItemScreenState extends State<FormItemScreen> {
 
     final appState = context.read<AppState>();
     final categories = appState.categories;
-    final categoryId = categories.any((category) => category.id == _selectedCategoryId)
-        ? _selectedCategoryId
-        : categories.firstOrNull?.id;
+    final categoryId =
+        categories.any((category) => category.id == _selectedCategoryId)
+            ? _selectedCategoryId
+            : categories.firstOrNull?.id;
     if (categoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tambahkan kategori terlebih dahulu.'),
-        ),
+        const SnackBar(content: Text('Tambahkan kategori terlebih dahulu.')),
       );
       return;
     }
@@ -74,6 +120,14 @@ class _FormItemScreenState extends State<FormItemScreen> {
       imageUrl: _imageController.text.trim().isNotEmpty
           ? _imageController.text.trim()
           : 'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1400&q=88',
+      latitude: double.tryParse(_latController.text) ?? 3.5651,
+      longitude: double.tryParse(_lngController.text) ?? 98.6538,
+      facilities: _selectedFacilities,
+      ownerId: appState.currentUser.id,
+      ownerName: _ownerNameController.text.trim(),
+      ownerPhone: _ownerPhoneController.text.trim(),
+      description: _descriptionController.text.trim(),
+      isAvailable: _isAvailable,
     );
 
     if (isEditing) {
@@ -81,7 +135,18 @@ class _FormItemScreenState extends State<FormItemScreen> {
     } else {
       appState.addKost(newKost);
     }
-    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isEditing ? 'Informasi kos berhasil diperbarui!' : 'Kos berhasil ditambahkan!',
+        ),
+      ),
+    );
+
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -90,6 +155,7 @@ class _FormItemScreenState extends State<FormItemScreen> {
     final colors = Theme.of(context).colorScheme;
     final categories = appState.categories;
     final isEditing = widget.itemToEdit != null;
+
     final selectedCategory = categories.any(
       (category) => category.id == _selectedCategoryId,
     )
@@ -98,7 +164,7 @@ class _FormItemScreenState extends State<FormItemScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit informasi kos' : 'Tambah kos'),
+        title: Text(isEditing ? 'Edit Informasi Kos' : 'Tambah Katalog Kos'),
       ),
       body: Form(
         key: _formKey,
@@ -106,7 +172,7 @@ class _FormItemScreenState extends State<FormItemScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
           children: [
             Text(
-              isEditing ? 'Perbarui informasi' : 'Ceritakan tentang kos',
+              isEditing ? 'Perbarui informasi' : 'Tambah Katalog Kos',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.7,
@@ -114,10 +180,11 @@ class _FormItemScreenState extends State<FormItemScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Lengkapi detail agar pencari kos dapat membandingkan dengan mudah.',
+              'Lengkapi detail properti agar pencari kos dapat menemukan kos milikmu dengan mudah.',
               style: TextStyle(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
+
             if (_imageController.text.trim().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -127,12 +194,13 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   borderRadius: 20,
                 ),
               ),
+
             TextFormField(
               controller: _titleController,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(
-                labelText: 'Nama kos',
-                hintText: 'Contoh: Kost Harmoni',
+                labelText: 'Nama Kos',
+                hintText: 'Contoh: Kos Bahagia Medan Baru',
                 prefixIcon: Icon(Icons.home_work_outlined),
               ),
               validator: (value) => value == null || value.trim().isEmpty
@@ -140,10 +208,11 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   : null,
             ),
             const SizedBox(height: 14),
+
             DropdownButtonFormField<String>(
               initialValue: selectedCategory,
               decoration: const InputDecoration(
-                labelText: 'Kategori kos',
+                labelText: 'Kategori Kos',
                 prefixIcon: Icon(Icons.category_outlined),
               ),
               items: categories
@@ -159,12 +228,13 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   value == null ? 'Pilih kategori kos.' : null,
             ),
             const SizedBox(height: 14),
+
             TextFormField(
               controller: _locationController,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(
-                labelText: 'Lokasi',
-                hintText: 'Kecamatan, patokan, atau jarak ke kampus',
+                labelText: 'Alamat / Lokasi Singkat',
+                hintText: 'Contoh: Jl. Dr. Mansyur, Kec. Medan Baru',
                 prefixIcon: Icon(Icons.location_on_outlined),
               ),
               validator: (value) => value == null || value.trim().isEmpty
@@ -172,11 +242,41 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   : null,
             ),
             const SizedBox(height: 14),
+
+            // Google Maps Direct Coordinates
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _latController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Latitude',
+                      hintText: '3.5651',
+                      prefixIcon: Icon(Icons.map_outlined),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextFormField(
+                    controller: _lngController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Longitude',
+                      hintText: '98.6538',
+                      prefixIcon: Icon(Icons.pin_drop_outlined),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
             TextFormField(
               controller: _priceController,
-              textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
-                labelText: 'Harga sewa',
+                labelText: 'Harga Sewa',
                 hintText: 'Contoh: Rp 850.000 / bulan',
                 prefixIcon: Icon(Icons.payments_outlined),
               ),
@@ -184,73 +284,99 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   ? 'Harga sewa wajib diisi.'
                   : null,
             ),
-            const SizedBox(height: 19),
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 13, 16, 8),
-              decoration: BoxDecoration(
-                color: colors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.star_rounded, color: colors.tertiary),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Penilaian',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      Text(
-                        _rating.toStringAsFixed(1),
-                        style: TextStyle(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Slider(
-                    value: _rating,
-                    min: 1,
-                    max: 5,
-                    divisions: 40,
-                    label: _rating.toStringAsFixed(1),
-                    onChanged: (value) => setState(() => _rating = value),
-                  ),
-                ],
+            const SizedBox(height: 14),
+
+            TextFormField(
+              controller: _ownerNameController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Pemilik Kos',
+                prefixIcon: Icon(Icons.person_outline_rounded),
               ),
             ),
             const SizedBox(height: 14),
+
+            TextFormField(
+              controller: _ownerPhoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Nomor WA / Telepon Pemilik',
+                prefixIcon: Icon(Icons.phone_outlined),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            TextFormField(
+              controller: _descriptionController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Deskripsi Tambahan',
+                prefixIcon: Icon(Icons.description_outlined),
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Facilities selection chips
+            Text(
+              'Pilih Fasilitas Kos',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: _availableFacilityOptions.map((fac) {
+                final isSelected = _selectedFacilities.contains(fac);
+                return FilterChip(
+                  label: Text(fac),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedFacilities.add(fac);
+                      } else {
+                        _selectedFacilities.remove(fac);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+
+            // Rating & Status Availability
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Status Kamar Tersedia'),
+              subtitle: Text(
+                _isAvailable
+                    ? 'Kos dapat dipesan oleh pencari kos'
+                    : 'Kos ditandai penuh',
+              ),
+              value: _isAvailable,
+              onChanged: (val) => setState(() => _isAvailable = val),
+            ),
+
+            const SizedBox(height: 14),
+
             TextFormField(
               controller: _imageController,
               keyboardType: TextInputType.url,
               onChanged: (_) => setState(() {}),
               decoration: const InputDecoration(
-                labelText: 'Tautan foto (opsional)',
+                labelText: 'Tautan Foto Kos (Opsional)',
                 hintText: 'https://...',
                 prefixIcon: Icon(Icons.image_outlined),
               ),
-              validator: (value) {
-                final url = value?.trim() ?? '';
-                if (url.isEmpty) return null;
-                final uri = Uri.tryParse(url);
-                if (uri == null ||
-                    !uri.hasAuthority ||
-                    (uri.scheme != 'http' && uri.scheme != 'https')) {
-                  return 'Masukkan tautan gambar yang valid.';
-                }
-                return null;
-              },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+
             FilledButton.icon(
               onPressed: _saveForm,
               icon: Icon(isEditing ? Icons.save_outlined : Icons.add_rounded),
-              label: Text(isEditing ? 'Simpan perubahan' : 'Simpan kos'),
+              label: Text(isEditing ? 'Simpan Perubahan' : 'Simpan Katalog Kos'),
             ),
           ],
         ),
