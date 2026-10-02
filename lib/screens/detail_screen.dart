@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/kost_model.dart';
+import '../models/user_role.dart';
 import '../providers/app_state.dart';
 import '../widgets/kost_image.dart';
 import 'form_item_screen.dart';
@@ -38,29 +39,63 @@ class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final categories = context.watch<AppState>().categories;
-    final category = categories.where((item) => item.id == this.item.categoryId);
+
+    // Membaca state aplikasi dan role pengguna saat ini
+    final appState = context.watch<AppState>();
+    final currentUser = appState.currentUser;
+    final isOwner = currentUser?.role == UserRole.pemilikKost;
+    final isFavorite = appState.favoriteKosts.any((k) => k.id == item.id);
+
+    final categories = appState.categories;
+    final category = categories.where((cat) => cat.id == item.categoryId);
     final categoryName = category.isEmpty ? 'Kos pilihan' : category.first.name;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail kos'),
         actions: [
-          IconButton(
-            tooltip: 'Edit informasi kos',
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => FormItemScreen(itemToEdit: item),
+          // Jika Pemilik Kost: Tampilkan tombol Edit & Hapus
+          if (isOwner) ...[
+            IconButton(
+              tooltip: 'Edit informasi kos',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => FormItemScreen(itemToEdit: item),
+                ),
               ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Hapus kos',
-            icon: const Icon(Icons.delete_outline_rounded),
-            onPressed: () => _showDeleteDialog(context),
-          ),
+            IconButton(
+              tooltip: 'Hapus kos',
+              icon: const Icon(Icons.delete_outline_rounded),
+              onPressed: () => _showDeleteDialog(context),
+            ),
+          ]
+          // Jika Pencari Kost: Tampilkan tombol Simpan/Favorit
+          else ...[
+            IconButton(
+              tooltip: isFavorite ? 'Hapus dari tersimpan' : 'Simpan ke favorit',
+              icon: Icon(
+                isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                color: isFavorite ? colors.primary : null,
+              ),
+              onPressed: () {
+                appState.toggleFavorite(item.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isFavorite
+                          ? 'Dihapus dari kos tersimpan'
+                          : 'Disimpan ke kos tersimpan',
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+          ],
+          const SizedBox(width: 8),
         ],
       ),
       body: ListView(
@@ -78,7 +113,7 @@ class DetailScreen extends StatelessWidget {
                 top: 14,
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: colors.surface.withValues(alpha: 0.94),
                     borderRadius: BorderRadius.circular(12),
@@ -102,9 +137,9 @@ class DetailScreen extends StatelessWidget {
                 child: Text(
                   item.title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.7,
-                      ),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.7,
+                  ),
                 ),
               ),
               Container(
@@ -211,9 +246,9 @@ class DetailScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Tempat tinggal ini terdaftar dalam kategori $categoryName dengan '
-            'penilaian ${item.rating.toStringAsFixed(1)} dari 5. '
-            'Gunakan informasi harga dan lokasi sebagai panduan awal, lalu '
-            'pastikan ketersediaan serta fasilitas langsung kepada pengelola.',
+                'penilaian ${item.rating.toStringAsFixed(1)} dari 5. '
+                'Gunakan informasi harga dan lokasi sebagai panduan awal, lalu '
+                'pastikan ketersediaan serta fasilitas langsung kepada pengelola.',
             style: TextStyle(
               color: colors.onSurfaceVariant,
               height: 1.65,
@@ -234,7 +269,7 @@ class DetailScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Informasi fasilitas dan ketersediaan dapat berubah. '
-                    'Konfirmasi kembali sebelum melakukan pemesanan.',
+                        'Konfirmasi kembali sebelum melakukan pemesanan.',
                     style: TextStyle(
                       color: colors.onSurfaceVariant,
                       fontSize: 12,

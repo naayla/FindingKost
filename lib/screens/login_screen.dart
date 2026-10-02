@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
 import '../models/user_role.dart';
@@ -16,9 +17,31 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'nayla@example.com');
+  final _emailController = TextEditingController(text: 'nana@example.com');
   final _passwordController = TextEditingController(text: '12345678');
   UserRole _selectedRole = UserRole.pencariKost;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedAccount();
+  }
+
+  // Membaca data tersimpan dari SharedPreferences jika ada
+  Future<void> _loadSavedAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('user_email');
+    final savedPassword = prefs.getString('user_password');
+
+    if (savedEmail != null && savedEmail.isNotEmpty) {
+      setState(() {
+        _emailController.text = savedEmail;
+        if (savedPassword != null && savedPassword.isNotEmpty) {
+          _passwordController.text = savedPassword;
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -27,8 +50,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _loginAsRole(UserRole role) {
+  Future<void> _loginAsRole(UserRole role) async {
     final appState = context.read<AppState>();
+    final prefs = await SharedPreferences.getInstance();
+
+    // Mengambil nama tersimpan jika ada, atau gunakan nilai bawaan
+    final savedName = prefs.getString('user_name');
+    final inputEmail = _emailController.text.trim();
+
     if (role == UserRole.pemilikKost) {
       appState.setCurrentUser(
         UserModel(
@@ -44,8 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
       appState.setCurrentUser(
         UserModel(
           id: 'user_seeker_1',
-          name: 'Nayla Syifa Tanjung',
-          email: 'nayla@example.com',
+          name: (savedName != null && savedName.isNotEmpty)
+              ? savedName
+              : 'Nayla Syifa Tanjung',
+          email: inputEmail.isNotEmpty ? inputEmail : 'nayla@example.com',
           phone: '+62 812 3456 7890',
           role: UserRole.pencariKost,
           institutionOrBusiness: 'Universitas Sumatera Utara',
@@ -53,12 +84,14 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute<void>(
-        builder: (_) => const MainNavigationScreen(),
-      ),
-    );
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute<void>(
+          builder: (_) => const MainNavigationScreen(),
+        ),
+      );
+    }
   }
 
   @override
@@ -94,9 +127,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Selamat datang kembali',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.7,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.7,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -152,7 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
 
                   FilledButton(
-                    onPressed: () => _loginAsRole(_selectedRole),
+                    onPressed: () {
+                      _loginAsRole(_selectedRole);
+                    },
                     child: Text('Masuk sebagai ${_selectedRole.displayName}'),
                   ),
                   const SizedBox(height: 16),
@@ -183,7 +218,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () => _loginAsRole(UserRole.pencariKost),
+                                onPressed: () {
+                                  _loginAsRole(UserRole.pencariKost);
+                                },
                                 icon: const Icon(Icons.person_outline, size: 16),
                                 label: const Text('Pencari Kost'),
                               ),
@@ -191,7 +228,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () => _loginAsRole(UserRole.pemilikKost),
+                                onPressed: () {
+                                  _loginAsRole(UserRole.pemilikKost);
+                                },
                                 icon: const Icon(Icons.home_work_outlined, size: 16),
                                 label: const Text('Pemilik Kost'),
                               ),
@@ -212,12 +251,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: colors.onSurfaceVariant),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute<void>(
-                            builder: (_) => const RegisterScreen(),
-                          ),
-                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute<void>(
+                              builder: (_) => const RegisterScreen(),
+                            ),
+                          ).then((_) {
+                            _loadSavedAccount();
+                          });
+                        },
                         child: const Text('Daftar sekarang'),
                       ),
                     ],
