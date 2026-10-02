@@ -11,23 +11,26 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _name = 'Nayla Syifa Tanjung';
-  String _email = 'nayla@example.com';
-  String _phone = '+62 812 3456 7890';
   final String _institution = 'Universitas Sumatera Utara';
 
-  Future<void> _editProfile() async {
+  Future<void> _editProfile(AppState appState) async {
     final result = await showDialog<List<String>>(
       context: context,
-      builder: (_) =>
-          _EditProfileDialog(name: _name, email: _email, phone: _phone),
+      builder: (_) => _EditProfileDialog(
+        name: appState.userName,
+        email: appState.userEmail,
+        phone: appState.userPhone,
+      ),
     );
+
     if (result != null && mounted) {
-      setState(() {
-        _name = result[0];
-        _email = result[1];
-        _phone = result[2];
-      });
+      // Simpan perubahan ke AppState
+      context.read<AppState>().setUserData(
+        name: result[0],
+        email: result[1],
+        phone: result[2],
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profil berhasil diperbarui.')),
       );
@@ -38,6 +41,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final appState = context.watch<AppState>();
+
+    // Menyiapkan fallback jika data awal belum terisi dari pendaftaran/login
+    final String displayName =
+    appState.userName.isNotEmpty ? appState.userName : 'Pengguna Baru';
+    final String displayEmail = appState.userEmail.isNotEmpty
+        ? appState.userEmail
+        : 'Belum mendaftarkan email';
+    final String displayPhone =
+    appState.userPhone.isNotEmpty ? appState.userPhone : '-';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
@@ -63,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   radius: 42,
                   backgroundColor: colors.onPrimary.withValues(alpha: 0.16),
                   child: Text(
-                    _initials(_name),
+                    _initials(displayName),
                     style: TextStyle(
                       color: colors.onPrimary,
                       fontWeight: FontWeight.w800,
@@ -73,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  _name,
+                  displayName,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: colors.onPrimary,
@@ -89,7 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 18),
                 OutlinedButton.icon(
-                  onPressed: _editProfile,
+                  onPressed: () => _editProfile(appState),
                   icon: const Icon(Icons.edit_outlined, size: 17),
                   label: const Text('Edit profil'),
                   style: OutlinedButton.styleFrom(
@@ -126,20 +138,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 26),
           Text(
             'Informasi akun',
-            style: Theme.of(context).textTheme.titleMedium
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
           _ProfileInfoTile(
             icon: Icons.mail_outline_rounded,
             label: 'Email',
-            value: _email,
+            value: displayEmail,
           ),
           const SizedBox(height: 10),
           _ProfileInfoTile(
             icon: Icons.phone_outlined,
             label: 'Nomor telepon',
-            value: _phone,
+            value: displayPhone,
           ),
           const SizedBox(height: 10),
           _ProfileInfoTile(
@@ -191,6 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _initials(String value) {
+    if (value.trim().isEmpty) return '?';
     final parts = value.trim().split(RegExp(r'\s+'));
     return parts
         .take(2)
@@ -336,12 +351,16 @@ class _ProfileStat extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: Theme.of(context).textTheme.titleMedium
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
                     ?.copyWith(fontWeight: FontWeight.w800),
               ),
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelSmall
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
                     ?.copyWith(color: colors.onSurfaceVariant),
               ),
             ],
