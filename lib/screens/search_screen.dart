@@ -164,7 +164,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DetailScreen(item: kost),
+                              builder: (_) => DetailScreen(item: kost),
                             ),
                           );
                         },
