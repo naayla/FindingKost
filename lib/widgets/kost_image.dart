@@ -5,11 +5,13 @@ class KostImage extends StatelessWidget {
     super.key,
     required this.imageUrl,
     required this.height,
+    this.width,
     this.borderRadius = 18,
   });
 
   final String imageUrl;
   final double height;
+  final double? width;
   final double borderRadius;
 
   @override
@@ -35,13 +37,14 @@ class KostImage extends StatelessWidget {
       borderRadius: BorderRadius.circular(borderRadius),
       child: Image.network(
         optimizedImageUrl,
-        width: double.infinity,
+        width: width ?? double.infinity,
         height: height,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.high,
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
           return Container(
+            width: width ?? double.infinity,
             height: height,
             color: colors.surfaceContainerHighest,
             alignment: Alignment.center,
@@ -55,6 +58,7 @@ class KostImage extends StatelessWidget {
           );
         },
         errorBuilder: (context, error, stackTrace) => Container(
+          width: width ?? double.infinity,
           height: height,
           color: colors.surfaceContainerHighest,
           alignment: Alignment.center,

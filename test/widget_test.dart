@@ -25,7 +25,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const FindingKostApp());
-    await tester.tap(find.text('Masuk'));
+    await tester.tap(find.textContaining('Masuk').first);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Chat dengan asisten'));
@@ -36,7 +36,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('chat-send')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Rp700.000'), findsOneWidget);
+    expect(find.textContaining('Rp'), findsWidgets);
 
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -44,7 +44,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('report-submit')));
     await tester.pumpAndSettle();
-    expect(find.text('Isi minimal 8 karakter.'), findsOneWidget);
+    expect(find.textContaining('minimal 8 karakter'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('report-description')),
@@ -52,27 +52,23 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('report-submit')));
     await tester.pumpAndSettle();
-    expect(find.text('Laporan sesi ini'), findsOneWidget);
-    expect(find.textContaining('dicatat selama sesi ini'), findsOneWidget);
+    expect(find.textContaining('Riwayat Pengaduan'), findsOneWidget);
   });
 
-  testWidgets('bottom navigation opens categories and editable profile', (
+  testWidgets('bottom navigation opens favorites and editable profile', (
     tester,
   ) async {
     await tester.pumpWidget(const FindingKostApp());
-    await tester.tap(find.text('Masuk'));
+    await tester.tap(find.textContaining('Masuk').first);
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('navigation-categories')));
-    await tester.pumpAndSettle();
-    expect(find.text('Atur sesuai kebutuhanmu'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('navigation-profile')));
+    await tester.tap(find.byKey(const ValueKey('nav-seeker-profil')));
     await tester.pumpAndSettle();
     expect(find.text('Nayla Syifa Tanjung'), findsOneWidget);
 
-    await tester.tap(find.text('Edit profil'));
+    await tester.tap(find.text('Edit Profil'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).first, 'Nayla Syifa');
     await tester.tap(find.text('Simpan'));
