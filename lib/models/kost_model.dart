@@ -6,6 +6,7 @@ class Kost {
   final String price;
   final double rating;
   final String imageUrl;
+  final String? imagePath;
 
   Kost({
     required this.id,
@@ -15,5 +16,6 @@ class Kost {
     required this.price,
     required this.rating,
     required this.imageUrl,
+    this.imagePath,
   });
 }

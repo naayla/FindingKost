@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../models/kost_model.dart';
 import '../models/category.dart';
+import '../models/kost_model.dart';
 
 class AppState extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -10,6 +10,25 @@ class AppState extends ChangeNotifier {
 
   void toggleDarkMode() {
     _isDarkMode = !_isDarkMode;
+    notifyListeners();
+  }
+
+  // --- MODUL USER / PROFIL DINAMIS ---
+  String _userName = '';  // Kosong saat awal dibuka
+  String _userEmail = ''; // Kosong saat awal dibuka
+  String _userPhone = ''; // Kosong saat awal dibuka
+
+  String get userName => _userName;
+  String get userEmail => _userEmail;
+  String get userPhone => _userPhone;
+
+  // Fungsi untuk menyimpan data pendaftaran user secara permanen
+  void setUserData({required String name, required String email, String? phone}) {
+    _userName = name;
+    _userEmail = email;
+    if (phone != null && phone.isNotEmpty) {
+      _userPhone = phone;
+    }
     notifyListeners();
   }
 
@@ -208,6 +227,7 @@ class AppState extends ChangeNotifier {
 
   List<Category> get categories => _categories;
   List<Kost> get items => _kostList;
+  List<Kost> get kostList => _kostList;
 
   // --- MODUL 1: CRUD KOST (DATA UTAMA) ---
   void addKost(Kost kost) {
@@ -228,7 +248,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Alias method untuk kompatibilitas layar lama
+  // Alias method untuk kompatibilitas
   void addItem(Kost kost) => addKost(kost);
   void updateItem(String id, Kost newKost) => updateKost(id, newKost);
   void deleteItem(String id) => deleteKost(id);
