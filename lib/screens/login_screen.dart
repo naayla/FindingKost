@@ -55,17 +55,28 @@ class _LoginScreenState extends State<LoginScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     final savedName = prefs.getString('user_name');
+    final savedEmail = prefs.getString('user_email');
+    final savedPhone = prefs.getString('user_phone');
+    final savedInstitution = prefs.getString('user_institution');
     final inputEmail = _emailController.text.trim();
 
     if (role == UserRole.pemilikKost) {
       appState.setCurrentUser(
         UserModel(
           id: 'user_owner_1',
-          name: 'Ibu Hj. Aminah',
-          email: 'owner.aminah@example.com',
-          phone: '+62 813 9876 5432',
+          name: (savedName != null && savedName.isNotEmpty)
+              ? savedName
+              : 'Ibu Hj. Aminah',
+          email: (savedEmail != null && savedEmail.isNotEmpty)
+              ? savedEmail
+              : (inputEmail.isNotEmpty ? inputEmail : 'owner.aminah@example.com'),
+          phone: (savedPhone != null && savedPhone.isNotEmpty)
+              ? savedPhone
+              : '+62 813 9876 5432',
           role: UserRole.pemilikKost,
-          institutionOrBusiness: 'Pemilik Kos Harmoni & Grand Residence',
+          institutionOrBusiness: (savedInstitution != null && savedInstitution.isNotEmpty)
+              ? savedInstitution
+              : 'Pemilik Kos Harmoni & Grand Residence',
         ),
       );
     } else {
@@ -75,10 +86,16 @@ class _LoginScreenState extends State<LoginScreen> {
           name: (savedName != null && savedName.isNotEmpty)
               ? savedName
               : 'Nayla Syifa Tanjung',
-          email: inputEmail.isNotEmpty ? inputEmail : 'nayla@example.com',
-          phone: '+62 812 3456 7890',
+          email: (savedEmail != null && savedEmail.isNotEmpty)
+              ? savedEmail
+              : (inputEmail.isNotEmpty ? inputEmail : 'nayla@example.com'),
+          phone: (savedPhone != null && savedPhone.isNotEmpty)
+              ? savedPhone
+              : '+62 812 3456 7890',
           role: UserRole.pencariKost,
-          institutionOrBusiness: 'Universitas Sumatera Utara',
+          institutionOrBusiness: (savedInstitution != null && savedInstitution.isNotEmpty)
+              ? savedInstitution
+              : 'Universitas Sumatera Utara',
         ),
       );
     }
@@ -197,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           // Card Kontainer Form dengan latar solid & bayangan lembut
                           Card(
                             elevation: isDarkMode ? 1 : 4,
-                            shadowColor: Colors.black.withOpacity(0.08),
+                            shadowColor: Colors.black.withValues(alpha: 0.08),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24),
                             ),
@@ -209,44 +226,110 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Segmented Button Peran
-                                  SizedBox(
+                                  // Custom Balanced Role Selector
+                                  Container(
                                     height: 50,
-                                    child: SegmentedButton<UserRole>(
-                                      style: ButtonStyle(
-                                        shape: WidgetStateProperty.all(
-                                          RoundedRectangleBorder(
-                                            borderRadius:
-                                            BorderRadius.circular(25),
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: colors.surfaceContainerHighest
+                                          .withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => setState(() =>
+                                                _selectedRole =
+                                                    UserRole.pencariKost),
+                                            child: Container(
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                color: _selectedRole ==
+                                                        UserRole.pencariKost
+                                                    ? colors.primary
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(21),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.search_rounded,
+                                                    size: 18,
+                                                    color: _selectedRole ==
+                                                            UserRole.pencariKost
+                                                        ? colors.onPrimary
+                                                        : colors.onSurface,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    'Pencari Kost',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: _selectedRole ==
+                                                              UserRole
+                                                                  .pencariKost
+                                                          ? colors.onPrimary
+                                                          : colors.onSurface,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                        textStyle: WidgetStateProperty.all(
-                                          const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => setState(() =>
+                                                _selectedRole =
+                                                    UserRole.pemilikKost),
+                                            child: Container(
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                color: _selectedRole ==
+                                                        UserRole.pemilikKost
+                                                    ? colors.primary
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(21),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.storefront_rounded,
+                                                    size: 18,
+                                                    color: _selectedRole ==
+                                                            UserRole.pemilikKost
+                                                        ? colors.onPrimary
+                                                        : colors.onSurface,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    'Pemilik Kost',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: _selectedRole ==
+                                                              UserRole
+                                                                  .pemilikKost
+                                                          ? colors.onPrimary
+                                                          : colors.onSurface,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      segments: const [
-                                        ButtonSegment<UserRole>(
-                                          value: UserRole.pencariKost,
-                                          label: Text('Pencari Kost'),
-                                          icon: Icon(Icons.home_rounded,
-                                              size: 18),
-                                        ),
-                                        ButtonSegment<UserRole>(
-                                          value: UserRole.pemilikKost,
-                                          label: Text('Pemilik Kost'),
-                                          icon: Icon(Icons.home_outlined,
-                                              size: 18),
                                         ),
                                       ],
-                                      selected: {_selectedRole},
-                                      onSelectionChanged: (newSelection) {
-                                        setState(() {
-                                          _selectedRole = newSelection.first;
-                                        });
-                                      },
                                     ),
                                   ),
                                   const SizedBox(height: 20),
