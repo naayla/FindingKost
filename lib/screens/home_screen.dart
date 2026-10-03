@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/kost_model.dart';
@@ -10,6 +9,7 @@ import 'chatbot_screen.dart';
 import 'complaint_screen.dart';
 import 'detail_screen.dart';
 import 'login_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,7 +23,27 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   String? _selectedCategoryId;
 
-  final String _myMapsUrl = 'https://maps.app.goo.gl/sample_my_maps';
+  // --- FILTER & SORT STATE ---
+  String _sortBy = 'rekomendasi'; // 'rekomendasi', 'harga_asc', 'harga_desc', 'rating_desc'
+  double _minPrice = 0;
+  double _maxPrice = 3500000;
+  List<String> _selectedFacilities = [];
+  bool _onlyAvailable = false;
+  double _minRating = 0;
+
+  static const double _defaultMaxPriceLimit = 3500000;
+
+  final List<String> _popularFacilities = [
+    'WiFi',
+    'AC',
+    'Kamar Mandi Dalam',
+    'Kasur',
+    'Lemari',
+    'Parkir',
+    'Dapur',
+    'Water Heater',
+    'CCTV',
+  ];
 
   @override
   void dispose() {
@@ -31,48 +51,356 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _showMyMapsDialog(BuildContext context) {
+  int _parsePrice(String priceStr) {
+    final clean = priceStr.replaceAll(RegExp(r'[^\d]'), '');
+    return int.tryParse(clean) ?? 0;
+  }
+
+  int get _activeFilterCount {
+    int count = 0;
+    if (_sortBy != 'rekomendasi') count++;
+    if (_minPrice > 0 || _maxPrice < _defaultMaxPriceLimit) count++;
+    if (_selectedFacilities.isNotEmpty) count += _selectedFacilities.length;
+    if (_onlyAvailable) count++;
+    if (_minRating > 0) count++;
+    return count;
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _sortBy = 'rekomendasi';
+      _minPrice = 0;
+      _maxPrice = _defaultMaxPriceLimit;
+      _selectedFacilities = [];
+      _onlyAvailable = false;
+      _minRating = 0;
+    });
+  }
+
+  String _formatRupiah(double value) {
+    if (value >= 1000000) {
+      double jt = value / 1000000;
+      return 'Rp ${jt.toStringAsFixed(jt.truncateToDouble() == jt ? 0 : 1)} Jt';
+    } else if (value >= 1000) {
+      return 'Rp ${(value / 1000).toInt()}rb';
+    }
+    return 'Rp ${value.toInt()}';
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    // Local copy of filter states for dialog interaction
+    String tempSortBy = _sortBy;
+    RangeValues tempPriceRange = RangeValues(_minPrice, _maxPrice);
+    List<String> tempFacilities = List.from(_selectedFacilities);
+    bool tempOnlyAvailable = _onlyAvailable;
+    double tempMinRating = _minRating;
+
     final colors = Theme.of(context).colorScheme;
-    showDialog(
+
+    showModalBottomSheet<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Peta sebaran kos'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Jelajahi peta interaktif untuk melihat area kos di sekitar Medan.',
-              style: TextStyle(color: colors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 14),
-            SelectableText(
-              _myMapsUrl,
-              style: TextStyle(
-                color: colors.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Tutup'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: _myMapsUrl));
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tautan peta berhasil disalin.')),
-              );
-            },
-            icon: const Icon(Icons.copy_rounded, size: 18),
-            label: const Text('Salin tautan'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final activeTempCount = (tempSortBy != 'rekomendasi' ? 1 : 0) +
+                (tempPriceRange.start > 0 || tempPriceRange.end < _defaultMaxPriceLimit ? 1 : 0) +
+                tempFacilities.length +
+                (tempOnlyAvailable ? 1 : 0) +
+                (tempMinRating > 0 ? 1 : 0);
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.85,
+              maxChildSize: 0.95,
+              minChildSize: 0.5,
+              builder: (context, scrollController) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colors.onSurfaceVariant.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Sheet Header
+                      Row(
+                        children: [
+                          Text(
+                            'Filter & Urutkan',
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          if (activeTempCount > 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colors.primaryContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '$activeTempCount aktif',
+                                style: TextStyle(
+                                  color: colors.onPrimaryContainer,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                tempSortBy = 'rekomendasi';
+                                tempPriceRange = const RangeValues(0, _defaultMaxPriceLimit);
+                                tempFacilities = [];
+                                tempOnlyAvailable = false;
+                                tempMinRating = 0;
+                              });
+                            },
+                            child: const Text('Riset Semua'),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+
+                      // Scrollable Filter Sections
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          children: [
+                            // 1. URUTKAN (SORT BY)
+                            _FilterSectionTitle(
+                              title: 'Urutkan Berdasarkan',
+                              icon: Icons.sort_rounded,
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _SortChip(
+                                  label: 'Rekomendasi',
+                                  selected: tempSortBy == 'rekomendasi',
+                                  onSelected: () => setModalState(() => tempSortBy = 'rekomendasi'),
+                                ),
+                                _SortChip(
+                                  label: 'Harga Termurah',
+                                  icon: Icons.arrow_downward_rounded,
+                                  selected: tempSortBy == 'harga_asc',
+                                  onSelected: () => setModalState(() => tempSortBy = 'harga_asc'),
+                                ),
+                                _SortChip(
+                                  label: 'Harga Termahal',
+                                  icon: Icons.arrow_upward_rounded,
+                                  selected: tempSortBy == 'harga_desc',
+                                  onSelected: () => setModalState(() => tempSortBy = 'harga_desc'),
+                                ),
+                                _SortChip(
+                                  label: 'Rating Tertinggi',
+                                  icon: Icons.star_rounded,
+                                  selected: tempSortBy == 'rating_desc',
+                                  onSelected: () => setModalState(() => tempSortBy = 'rating_desc'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // 2. RENTANG HARGA
+                            _FilterSectionTitle(
+                              title: 'Rentang Harga Per Bulan',
+                              icon: Icons.payments_outlined,
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _formatRupiah(tempPriceRange.start),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                                Text(
+                                  tempPriceRange.end >= _defaultMaxPriceLimit
+                                      ? '${_formatRupiah(tempPriceRange.end)}+'
+                                      : _formatRupiah(tempPriceRange.end),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            RangeSlider(
+                              values: tempPriceRange,
+                              min: 0,
+                              max: _defaultMaxPriceLimit,
+                              divisions: 35,
+                              labels: RangeLabels(
+                                _formatRupiah(tempPriceRange.start),
+                                _formatRupiah(tempPriceRange.end),
+                              ),
+                              onChanged: (values) {
+                                setModalState(() {
+                                  tempPriceRange = values;
+                                });
+                              },
+                            ),
+                            // Quick Price Presets
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ActionChip(
+                                  label: const Text('< 1 Juta'),
+                                  onPressed: () => setModalState(() {
+                                    tempPriceRange = const RangeValues(0, 1000000);
+                                  }),
+                                ),
+                                ActionChip(
+                                  label: const Text('1 Jt - 2 Jt'),
+                                  onPressed: () => setModalState(() {
+                                    tempPriceRange = const RangeValues(1000000, 2000000);
+                                  }),
+                                ),
+                                ActionChip(
+                                  label: const Text('> 2 Juta'),
+                                  onPressed: () => setModalState(() {
+                                    tempPriceRange = const RangeValues(2000000, _defaultMaxPriceLimit);
+                                  }),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // 3. STATUS KETERSEDIAAN
+                            _FilterSectionTitle(
+                              title: 'Ketersediaan',
+                              icon: Icons.event_available_rounded,
+                            ),
+                            const SizedBox(height: 6),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                'Hanya kos yang masih tersedia',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              ),
+                              value: tempOnlyAvailable,
+                              onChanged: (val) => setModalState(() => tempOnlyAvailable = val),
+                            ),
+                            const SizedBox(height: 18),
+
+                            // 4. MINIMUM RATING
+                            _FilterSectionTitle(
+                              title: 'Minimum Rating',
+                              icon: Icons.star_outline_rounded,
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                for (final r in [0.0, 4.0, 4.5, 4.8])
+                                  FilterChip(
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (r > 0) ...[
+                                          const Icon(Icons.star_rounded, size: 16, color: Color(0xFFC78B33)),
+                                          const SizedBox(width: 4),
+                                        ],
+                                        Text(r == 0 ? 'Semua Rating' : '≥ ${r.toStringAsFixed(1)}'),
+                                      ],
+                                    ),
+                                    selected: tempMinRating == r,
+                                    onSelected: (_) => setModalState(() => tempMinRating = r),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+
+                            // 5. FASILITAS KOST
+                            _FilterSectionTitle(
+                              title: 'Fasilitas Kos',
+                              icon: Icons.single_bed_outlined,
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final facility in _popularFacilities)
+                                  FilterChip(
+                                    label: Text(facility),
+                                    selected: tempFacilities.contains(facility),
+                                    onSelected: (selected) {
+                                      setModalState(() {
+                                        if (selected) {
+                                          tempFacilities.add(facility);
+                                        } else {
+                                          tempFacilities.remove(facility);
+                                        }
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 28),
+                          ],
+                        ),
+                      ),
+
+                      // Apply Button
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _sortBy = tempSortBy;
+                                _minPrice = tempPriceRange.start;
+                                _maxPrice = tempPriceRange.end;
+                                _selectedFacilities = tempFacilities;
+                                _onlyAvailable = tempOnlyAvailable;
+                                _minRating = tempMinRating;
+                              });
+                              Navigator.pop(ctx);
+                            },
+                            icon: const Icon(Icons.check_rounded),
+                            label: Text(
+                              activeTempCount > 0
+                                  ? 'Terapkan Filter ($activeTempCount)'
+                                  : 'Terapkan Filter',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 
@@ -107,14 +435,43 @@ class _HomeScreenState extends State<HomeScreen> {
     final appState = context.watch<AppState>();
     final colors = Theme.of(context).colorScheme;
     final categories = appState.categories;
+
+    // Filter Logic
     final filteredKost = appState.items.where((kost) {
       final query = _searchQuery.trim().toLowerCase();
       final matchesQuery = kost.title.toLowerCase().contains(query) ||
           kost.location.toLowerCase().contains(query);
       final matchesCategory = _selectedCategoryId == null ||
           kost.categoryId == _selectedCategoryId;
-      return matchesQuery && matchesCategory;
+
+      final priceVal = _parsePrice(kost.price);
+      final matchesPrice = priceVal >= _minPrice && priceVal <= _maxPrice;
+
+      final matchesAvailability = !_onlyAvailable || kost.isAvailable;
+
+      final matchesRating = kost.rating >= _minRating;
+
+      final matchesFacilities = _selectedFacilities.isEmpty ||
+          _selectedFacilities.every((fac) {
+            return kost.facilities.any((f) => f.toLowerCase().contains(fac.toLowerCase()));
+          });
+
+      return matchesQuery &&
+          matchesCategory &&
+          matchesPrice &&
+          matchesAvailability &&
+          matchesRating &&
+          matchesFacilities;
     }).toList();
+
+    // Sort Logic
+    if (_sortBy == 'harga_asc') {
+      filteredKost.sort((a, b) => _parsePrice(a.price).compareTo(_parsePrice(b.price)));
+    } else if (_sortBy == 'harga_desc') {
+      filteredKost.sort((a, b) => _parsePrice(b.price).compareTo(_parsePrice(a.price)));
+    } else if (_sortBy == 'rating_desc') {
+      filteredKost.sort((a, b) => b.rating.compareTo(a.rating));
+    }
 
     String categoryName(Kost kost) {
       for (final category in categories) {
@@ -131,6 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  // APP HEADER
                   Row(
                     children: [
                       const AppLogo(compact: true),
@@ -187,6 +545,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 4),
                       _HeaderAction(
+                        tooltip: 'Pengaturan',
+                        icon: Icons.settings_outlined,
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => const SettingsScreen(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      _HeaderAction(
                         tooltip: 'Keluar',
                         icon: Icons.logout_rounded,
                         onPressed: () => _showLogoutDialog(context),
@@ -194,6 +563,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 22),
+
+                  // HERO BANNER
                   Container(
                     padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
                     decoration: BoxDecoration(
@@ -276,6 +647,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 22),
+
+                  // SEARCH FIELD
                   TextField(
                     controller: _searchController,
                     onChanged: (value) => setState(() => _searchQuery = value),
@@ -295,25 +668,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Jelajahi kategori',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      TextButton.icon(
-                        onPressed: () => _showMyMapsDialog(context),
-                        icon: const Icon(Icons.map_outlined, size: 18),
-                        label: const Text('Peta'),
-                      ),
-                    ],
+
+                  // CATEGORIES HEADER
+                  Text(
+                    'Jelajahi kategori',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
+
+                  // CATEGORY CHIPS
                   SizedBox(
                     height: 42,
                     child: ListView(
@@ -343,8 +709,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 22),
+
+                  // SECTION HEADER WITH FILTER BUTTON
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         child: Column(
@@ -373,16 +741,157 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.tune_rounded,
-                        color: colors.primary,
-                        size: 21,
+                      // Interactive Filter Button
+                      InkWell(
+                        onTap: () => _showFilterBottomSheet(context),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _activeFilterCount > 0
+                                ? colors.primaryContainer
+                                : colors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: _activeFilterCount > 0
+                                  ? colors.primary
+                                  : colors.outlineVariant.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tune_rounded,
+                                color: _activeFilterCount > 0
+                                    ? colors.onPrimaryContainer
+                                    : colors.primary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Filter',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: _activeFilterCount > 0
+                                      ? colors.onPrimaryContainer
+                                      : colors.onSurface,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              if (_activeFilterCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: colors.primary,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$_activeFilterCount',
+                                    style: TextStyle(
+                                      color: colors.onPrimary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
+
+                  // ACTIVE FILTERS CHIPS BAR
+                  if (_activeFilterCount > 0) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 34,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          if (_sortBy != 'rekomendasi')
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: InputChip(
+                                label: Text(
+                                  _sortBy == 'harga_asc'
+                                      ? 'Urut: Termurah'
+                                      : _sortBy == 'harga_desc'
+                                          ? 'Urut: Termahal'
+                                          : 'Urut: Rating',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                ),
+                                onDeleted: () => setState(() => _sortBy = 'rekomendasi'),
+                              ),
+                            ),
+                          if (_minPrice > 0 || _maxPrice < _defaultMaxPriceLimit)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: InputChip(
+                                label: Text(
+                                  '${_formatRupiah(_minPrice)} - ${_formatRupiah(_maxPrice)}',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                ),
+                                onDeleted: () => setState(() {
+                                  _minPrice = 0;
+                                  _maxPrice = _defaultMaxPriceLimit;
+                                }),
+                              ),
+                            ),
+                          if (_onlyAvailable)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: InputChip(
+                                label: const Text(
+                                  'Hanya Tersedia',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                ),
+                                onDeleted: () => setState(() => _onlyAvailable = false),
+                              ),
+                            ),
+                          if (_minRating > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: InputChip(
+                                label: Text(
+                                  'Rating ≥ ${_minRating.toStringAsFixed(1)}',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                ),
+                                onDeleted: () => setState(() => _minRating = 0),
+                              ),
+                            ),
+                          for (final fac in _selectedFacilities)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: InputChip(
+                                label: Text(
+                                  fac,
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                ),
+                                onDeleted: () => setState(() => _selectedFacilities.remove(fac)),
+                              ),
+                            ),
+                          ActionChip(
+                            label: const Text('Hapus Semua', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.red)),
+                            onPressed: _resetFilters,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 14),
+
+                  // KOST LIST OR EMPTY STATE
                   if (filteredKost.isEmpty)
-                    _EmptySearch(query: _searchQuery)
+                    _EmptySearch(
+                      query: _searchQuery,
+                      hasActiveFilters: _activeFilterCount > 0,
+                      onResetFilters: _resetFilters,
+                    )
                   else
                     for (final kost in filteredKost)
                       Padding(
@@ -404,6 +913,64 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FilterSectionTitle extends StatelessWidget {
+  const _FilterSectionTitle({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: colors.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SortChip extends StatelessWidget {
+  const _SortChip({
+    required this.label,
+    this.icon,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final String label;
+  final IconData? icon;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 15, color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 4),
+          ],
+          Text(label),
+        ],
+      ),
+      selected: selected,
+      onSelected: (_) => onSelected(),
+      showCheckmark: false,
     );
   }
 }
@@ -588,6 +1155,22 @@ class _KostCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (!kost.isAvailable)
+                    Positioned(
+                      left: 11,
+                      bottom: 11,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade700,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Penuh / Tidak Tersedia',
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
                 ],
               ),
               Padding(
@@ -626,7 +1209,32 @@ class _KostCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 13),
+                    const SizedBox(height: 10),
+                    // Facility preview tags
+                    if (kost.facilities.isNotEmpty) ...[
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: kost.facilities.take(3).map((fac) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: colors.surfaceContainer,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              fac,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: colors.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     Row(
                       children: [
                         Expanded(
@@ -658,9 +1266,15 @@ class _KostCard extends StatelessWidget {
 }
 
 class _EmptySearch extends StatelessWidget {
-  const _EmptySearch({required this.query});
+  const _EmptySearch({
+    required this.query,
+    required this.hasActiveFilters,
+    required this.onResetFilters,
+  });
 
   final String query;
+  final bool hasActiveFilters;
+  final VoidCallback onResetFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -676,7 +1290,7 @@ class _EmptySearch extends StatelessWidget {
           Icon(Icons.search_off_rounded, size: 48, color: colors.primary),
           const SizedBox(height: 12),
           Text(
-            query.isEmpty ? 'Belum ada kos di kategori ini' : 'Kos belum ditemukan',
+            query.isEmpty ? 'Belum ada kos yang cocok' : 'Kos belum ditemukan',
             textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
@@ -685,10 +1299,20 @@ class _EmptySearch extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            'Coba kata kunci atau kategori lainnya.',
+            hasActiveFilters
+                ? 'Tidak ada kos yang memenuhi kombinasi filter dan pencarian Anda.'
+                : 'Coba kata kunci atau kategori lainnya.',
             textAlign: TextAlign.center,
             style: TextStyle(color: colors.onSurfaceVariant),
           ),
+          if (hasActiveFilters) ...[
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onResetFilters,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Reset Semua Filter'),
+            ),
+          ],
         ],
       ),
     );

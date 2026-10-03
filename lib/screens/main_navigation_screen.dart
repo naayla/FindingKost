@@ -8,7 +8,6 @@ import 'form_item_screen.dart';
 import 'home_screen.dart';
 import 'map_screen.dart';
 import 'profile_screen.dart';
-import 'settings_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -38,7 +37,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             MapScreen(key: ValueKey('seeker-map')),
             FavoritesScreen(key: ValueKey('seeker-favorites')),
             ProfileScreen(key: ValueKey('seeker-profile')),
-            SettingsScreen(key: ValueKey('seeker-settings')),
           ];
 
     final List<NavigationDestination> destinations = isOwner
@@ -98,12 +96,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               icon: Icon(Icons.person_outline_rounded),
               selectedIcon: Icon(Icons.person_rounded),
               label: 'Profil',
-            ),
-            NavigationDestination(
-              key: ValueKey('nav-seeker-pengaturan'),
-              icon: Icon(Icons.tune_rounded),
-              selectedIcon: Icon(Icons.tune_rounded),
-              label: 'Pengaturan',
             ),
           ];
 
