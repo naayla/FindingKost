@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../models/kost_model.dart';
@@ -17,7 +18,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   Kost? _selectedKost;
   String? _selectedCategoryId;
 
@@ -29,51 +30,6 @@ class _MapScreenState extends State<MapScreen> {
     if (widget.initialSelectedKost != null) {
       _selectedKost = widget.initialSelectedKost;
     }
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-
-    if (_selectedKost != null) {
-      _mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(
-          LatLng(_selectedKost!.latitude, _selectedKost!.longitude),
-          15.0,
-        ),
-      );
-    }
-  }
-
-  Set<Marker> _buildMarkers(List<Kost> kostList) {
-    final markers = <Marker>{};
-    for (final kost in kostList) {
-      final isSelected = _selectedKost?.id == kost.id;
-      markers.add(
-        Marker(
-          markerId: MarkerId(kost.id),
-          position: LatLng(kost.latitude, kost.longitude),
-          infoWindow: InfoWindow(
-            title: kost.title,
-            snippet: '${kost.price} • Rating ${kost.rating}',
-          ),
-          icon: isSelected
-              ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange)
-              : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
-          onTap: () {
-            setState(() {
-              _selectedKost = kost;
-            });
-            _mapController?.animateCamera(
-              CameraUpdate.newLatLngZoom(
-                LatLng(kost.latitude, kost.longitude),
-                15.0,
-              ),
-            );
-          },
-        ),
-      );
-    }
-    return markers;
   }
 
   @override
@@ -88,11 +44,13 @@ class _MapScreenState extends State<MapScreen> {
       return matchesCategory;
     }).toList();
 
-    final markers = _buildMarkers(filteredKostList);
+    final initialCenter = _selectedKost != null
+        ? LatLng(_selectedKost!.latitude, _selectedKost!.longitude)
+        : _defaultMedanCenter;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Peta Sebaran Kos Direct'),
+        title: const Text('Peta Sebaran Kos (OpenStreetMap)'),
         actions: [
           IconButton(
             tooltip: 'Reset Tampilan Peta',
@@ -101,9 +59,7 @@ class _MapScreenState extends State<MapScreen> {
               setState(() {
                 _selectedKost = null;
               });
-              _mapController?.animateCamera(
-                CameraUpdate.newLatLngZoom(_defaultMedanCenter, 12.8),
-              );
+              _mapController.move(_defaultMedanCenter, 13.0);
             },
           ),
           const SizedBox(width: 8),
@@ -111,25 +67,60 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          // Native Interactive Google Maps view
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: _selectedKost != null
-                  ? LatLng(_selectedKost!.latitude, _selectedKost!.longitude)
-                  : _defaultMedanCenter,
-              zoom: _selectedKost != null ? 15.0 : 12.8,
+          // OpenStreetMap view (No API Key required, 100% Free)
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: initialCenter,
+              initialZoom: 14.0,
+              onTap: (_, _) => setState(() => _selectedKost = null),
             ),
-            onMapCreated: _onMapCreated,
-            markers: markers,
-            myLocationEnabled: false,
-            zoomControlsEnabled: true,
-            mapToolbarEnabled: true,
-            compassEnabled: true,
-            onTap: (_) {
-              setState(() {
-                _selectedKost = null;
-              });
-            },
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.tugas_kelompok',
+              ),
+              MarkerLayer(
+                markers: filteredKostList.map((kost) {
+                  final isSelected = _selectedKost?.id == kost.id;
+                  return Marker(
+                    point: LatLng(kost.latitude, kost.longitude),
+                    width: 44,
+                    height: 44,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedKost = kost;
+                        });
+                        _mapController.move(
+                          LatLng(kost.latitude, kost.longitude),
+                          15.0,
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? colors.primary : Colors.redAccent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.home_rounded,
+                          color: Colors.white,
+                          size: isSelected ? 24 : 20,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
 
           // Top Floating Category Filter Bar

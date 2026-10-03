@@ -52,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _getInitials(String name) {
     List<String> names = name.trim().split(' ');
     if (names.length >= 2 && names[0].isNotEmpty && names[1].isNotEmpty) {
-      return '${names[0][0]}'.toUpperCase() + '${names[1][0]}'.toUpperCase();
+      return '${names[0][0]}${names[1][0]}'.toUpperCase();
     } else if (names.isNotEmpty && names[0].isNotEmpty) {
       return names[0][0].toUpperCase();
     }
@@ -113,7 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 36,
-                    backgroundColor: Colors.white.withOpacity(0.25),
+                    backgroundColor: Colors.white.withValues(alpha: 0.25),
                     child: Text(
                       initials,
                       style: const TextStyle(
@@ -137,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -154,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: const Icon(Icons.edit_outlined, size: 14, color: Colors.white),
                         label: const Text('Edit Profil', style: TextStyle(color: Colors.white, fontSize: 12)),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.white.withOpacity(0.6)),
+                          side: BorderSide(color: Colors.white.withValues(alpha: 0.6)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
                       ),
