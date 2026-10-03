@@ -41,10 +41,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     await prefs.setString('user_name', _nameController.text.trim());
     await prefs.setString('user_email', _emailController.text.trim());
     await prefs.setString('user_password', _passwordController.text.trim());
-
-    if (_selectedRole == UserRole.pemilikKost) {
-      await prefs.setString('user_phone', _phoneController.text.trim());
-    }
+    await prefs.setString('user_phone', _phoneController.text.trim());
+    await prefs.setString(
+      'user_institution',
+      _selectedRole == UserRole.pemilikKost
+          ? 'Pemilik Kost Mandiri'
+          : 'Universitas Sumatera Utara',
+    );
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

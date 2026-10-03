@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
 import '../models/category.dart';
 import '../models/kost_model.dart';
 import '../models/user_model.dart';
 import '../models/user_role.dart';
+import '../models/booking_model.dart';
+import '../models/review_model.dart';
 
 class AppState extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -17,8 +18,8 @@ class AppState extends ChangeNotifier {
   // --- USER STATE & ROLE ---
   UserModel _currentUser = UserModel(
     id: 'user_seeker_1',
-    name: 'Nayla Syifa Tanjung',
-    email: 'nayla@example.com',
+    name: 'Pengguna',
+    email: 'pengguna@example.com',
     phone: '+62 812 3456 7890',
     role: UserRole.pencariKost,
     institutionOrBusiness: 'Universitas Sumatera Utara',
@@ -486,6 +487,50 @@ class AppState extends ChangeNotifier {
 
   void deleteCategory(String id) {
     _categories.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
+  // --- BOOKINGS & REVIEWS & ACTIVITY LOGS ---
+  final List<BookingModel> _bookings = [];
+  List<BookingModel> get bookings => _bookings;
+
+  void addBooking(BookingModel booking) {
+    _bookings.insert(0, booking);
+    _activityLogs.insert(0, 'Mengajukan sewa untuk ${booking.kostTitle}');
+    notifyListeners();
+  }
+
+  final Map<String, List<ReviewModel>> _reviewsMap = {
+    '1': [
+      ReviewModel(id: 'r1', kostId: '1', userName: 'Nayla Syifa', rating: 5.0, comment: 'Kos sangat bersih dan dekat kampus USU!', createdAt: DateTime.now().subtract(const Duration(days: 2))),
+      ReviewModel(id: 'r2', kostId: '1', userName: 'Budi Santoso', rating: 4.5, comment: 'Pemilik ramah dan fasilitas lengkap.', createdAt: DateTime.now().subtract(const Duration(days: 5))),
+    ],
+    '4': [
+      ReviewModel(id: 'r3', kostId: '4', userName: 'Siti Rahma', rating: 5.0, comment: 'Eksklusif mewah, AC dingin, air panas lancar.', createdAt: DateTime.now().subtract(const Duration(days: 1))),
+    ]
+  };
+
+  List<ReviewModel> getReviewsForKost(String kostId) {
+    return _reviewsMap[kostId] ?? [];
+  }
+
+  void addReview(ReviewModel review) {
+    if (_reviewsMap[review.kostId] == null) {
+      _reviewsMap[review.kostId] = [];
+    }
+    _reviewsMap[review.kostId]!.insert(0, review);
+    _activityLogs.insert(0, 'Menambahkan ulasan untuk kos');
+    notifyListeners();
+  }
+
+  final List<String> _activityLogs = [
+    'Masuk ke aplikasi Finding Kost',
+    'Menjelajahi katalog kos di Medan',
+  ];
+  List<String> get activityLogs => _activityLogs;
+
+  void logActivity(String message) {
+    _activityLogs.insert(0, message);
     notifyListeners();
   }
 }
