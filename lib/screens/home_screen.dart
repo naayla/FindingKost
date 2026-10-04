@@ -140,6 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final appState = context.watch<AppState>();
     final colors = Theme.of(context).colorScheme;
     final categories = appState.categories;
+    final isOwner = appState.isOwner;
+
     final filteredKost = appState.items.where((kost) {
       final query = _searchQuery.trim().toLowerCase();
       final matchesQuery = kost.title.toLowerCase().contains(query) ||
@@ -194,9 +196,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   .textTheme
                                   .titleMedium
                                   ?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.4,
-                                  ),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.4,
+                              ),
                             ),
                             Text(
                               'RUANG NYAMANMU MENANTI',
@@ -204,11 +206,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   .textTheme
                                   .labelSmall
                                   ?.copyWith(
-                                    color: colors.onSurfaceVariant,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.7,
-                                  ),
+                                color: colors.onSurfaceVariant,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.7,
+                              ),
                             ),
                           ],
                         ),
@@ -271,33 +273,39 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'TEMUKAN TEMPAT PULANG',
+                              isOwner
+                                  ? 'TEMUKAN PENGHUNI KOST'
+                                  : 'TEMUKAN TEMPAT PULANG',
                               style: Theme.of(context)
                                   .textTheme
                                   .labelMedium
                                   ?.copyWith(
-                                    color: colors.onPrimary
-                                        .withValues(alpha: 0.78),
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.3,
-                                  ),
+                                color: colors.onPrimary
+                                    .withValues(alpha: 0.78),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.3,
+                              ),
                             ),
                             const SizedBox(height: 9),
                             Text(
-                              'Ruang nyaman,\nawal cerita baru.',
+                              isOwner
+                                  ? 'kelola kost,\nkembangkan usahamu.'
+                                  : 'Ruang nyaman,\nawal cerita baru.',
                               style: Theme.of(context)
                                   .textTheme
                                   .headlineSmall
                                   ?.copyWith(
-                                    color: colors.onPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.14,
-                                    letterSpacing: -0.7,
-                                  ),
+                                color: colors.onPrimary,
+                                fontWeight: FontWeight.w800,
+                                height: 1.14,
+                                letterSpacing: -0.7,
+                              ),
                             ),
                             const SizedBox(height: 10),
                             Text(
-                              'Temukan kos yang cocok dengan ritme hidupmu.',
+                              isOwner
+                                  ? 'temukan penghuni yang cocok dengan kost mu.'
+                                  : 'temukan kost yang cocok dengan ritme hidupmu.',
                               style: TextStyle(
                                 color: colors.onPrimary.withValues(alpha: 0.82),
                                 fontSize: 13,
@@ -308,7 +316,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 _HeroStat(
                                   value: '${appState.items.length}+',
-                                  label: 'Pilihan kos',
+                                  label: isOwner
+                                      ? 'pencari kost'
+                                      : 'Pilihan kost',
                                   color: colors.onPrimary,
                                 ),
                                 const SizedBox(width: 24),
@@ -333,13 +343,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       suffixIcon: _searchQuery.isEmpty
                           ? null
                           : IconButton(
-                              tooltip: 'Hapus pencarian',
-                              icon: const Icon(Icons.close_rounded),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            ),
+                        tooltip: 'Hapus pencarian',
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      ),
                       hintText: 'Cari nama kos atau lokasi',
                     ),
                   ),
@@ -348,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          'Jelajahi kategori',
+                          isOwner ? 'kelola kostmu' : 'Jelajahi kategori',
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium
@@ -391,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               label: category.name,
                               selected: _selectedCategoryId == category.id,
                               onTap: () => setState(
-                                () => _selectedCategoryId = category.id,
+                                    () => _selectedCategoryId = category.id,
                               ),
                             ),
                           ),
@@ -408,15 +418,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               _searchQuery.isEmpty
-                                  ? 'Pilihan untukmu'
+                                  ? (isOwner
+                                  ? 'kostmu, pilihan mereka'
+                                  : 'Pilihan untukmu')
                                   : 'Hasil pencarian',
                               style: Theme.of(context)
                                   .textTheme
                                   .titleLarge
                                   ?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.5,
-                                  ),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
                             ),
                             const SizedBox(height: 3),
                             Text(
@@ -516,9 +528,9 @@ class _HeroStat extends StatelessWidget {
         Text(
           value,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w800,
-              ),
+            color: color,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(width: 7),
         Text(
@@ -663,9 +675,9 @@ class _KostCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Row(

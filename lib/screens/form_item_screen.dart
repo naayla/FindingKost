@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/kost_model.dart';
 import '../providers/app_state.dart';
 import '../widgets/kost_image.dart';
+import 'main_navigation_screen.dart';
 
 class FormItemScreen extends StatefulWidget {
   final Kost? itemToEdit;
@@ -97,9 +98,9 @@ class _FormItemScreenState extends State<FormItemScreen> {
     final appState = context.read<AppState>();
     final categories = appState.categories;
     final categoryId =
-        categories.any((category) => category.id == _selectedCategoryId)
-            ? _selectedCategoryId
-            : categories.firstOrNull?.id;
+    categories.any((category) => category.id == _selectedCategoryId)
+        ? _selectedCategoryId
+        : categories.firstOrNull?.id;
     if (categoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tambahkan kategori terlebih dahulu.')),
@@ -149,6 +150,19 @@ class _FormItemScreenState extends State<FormItemScreen> {
     }
   }
 
+  void _handleBackNavigation() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MainNavigationScreen(),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
@@ -157,28 +171,24 @@ class _FormItemScreenState extends State<FormItemScreen> {
     final isEditing = widget.itemToEdit != null;
 
     final selectedCategory = categories.any(
-      (category) => category.id == _selectedCategoryId,
+          (category) => category.id == _selectedCategoryId,
     )
         ? _selectedCategoryId
         : categories.firstOrNull?.id;
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _handleBackNavigation,
+        ),
         title: Text(isEditing ? 'Edit Informasi Kos' : 'Tambah Katalog Kos'),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            Text(
-              isEditing ? 'Perbarui informasi' : 'Tambah Katalog Kos',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.7,
-                  ),
-            ),
-            const SizedBox(height: 6),
             Text(
               'Lengkapi detail properti agar pencari kos dapat menemukan kos milikmu dengan mudah.',
               style: TextStyle(color: colors.onSurfaceVariant),
@@ -218,14 +228,14 @@ class _FormItemScreenState extends State<FormItemScreen> {
               items: categories
                   .map(
                     (category) => DropdownMenuItem(
-                      value: category.id,
-                      child: Text(category.name),
-                    ),
-                  )
+                  value: category.id,
+                  child: Text(category.name),
+                ),
+              )
                   .toList(),
               onChanged: (value) => setState(() => _selectedCategoryId = value),
               validator: (value) =>
-                  value == null ? 'Pilih kategori kos.' : null,
+              value == null ? 'Pilih kategori kos.' : null,
             ),
             const SizedBox(height: 14),
 
@@ -243,7 +253,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Google Maps Direct Coordinates
             Row(
               children: [
                 Expanded(
@@ -315,7 +324,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
             ),
             const SizedBox(height: 18),
 
-            // Facilities selection chips
             Text(
               'Pilih Fasilitas Kos',
               style: Theme.of(context)
@@ -346,7 +354,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
             ),
             const SizedBox(height: 18),
 
-            // Rating & Status Availability
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Status Kamar Tersedia'),
