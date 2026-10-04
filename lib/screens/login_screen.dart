@@ -240,27 +240,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Expanded(
                                           child: GestureDetector(
                                             onTap: () => setState(() =>
-                                                _selectedRole =
-                                                    UserRole.pencariKost),
+                                            _selectedRole =
+                                                UserRole.pencariKost),
                                             child: Container(
                                               alignment: Alignment.center,
                                               decoration: BoxDecoration(
                                                 color: _selectedRole ==
-                                                        UserRole.pencariKost
+                                                    UserRole.pencariKost
                                                     ? colors.primary
                                                     : Colors.transparent,
                                                 borderRadius:
-                                                    BorderRadius.circular(21),
+                                                BorderRadius.circular(21),
                                               ),
                                               child: Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                                 children: [
                                                   Icon(
                                                     Icons.search_rounded,
                                                     size: 18,
                                                     color: _selectedRole ==
-                                                            UserRole.pencariKost
+                                                        UserRole.pencariKost
                                                         ? colors.onPrimary
                                                         : colors.onSurface,
                                                   ),
@@ -270,10 +270,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     style: TextStyle(
                                                       fontSize: 13,
                                                       fontWeight:
-                                                          FontWeight.w700,
+                                                      FontWeight.w700,
                                                       color: _selectedRole ==
-                                                              UserRole
-                                                                  .pencariKost
+                                                          UserRole
+                                                              .pencariKost
                                                           ? colors.onPrimary
                                                           : colors.onSurface,
                                                     ),
@@ -286,27 +286,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Expanded(
                                           child: GestureDetector(
                                             onTap: () => setState(() =>
-                                                _selectedRole =
-                                                    UserRole.pemilikKost),
+                                            _selectedRole =
+                                                UserRole.pemilikKost),
                                             child: Container(
                                               alignment: Alignment.center,
                                               decoration: BoxDecoration(
                                                 color: _selectedRole ==
-                                                        UserRole.pemilikKost
+                                                    UserRole.pemilikKost
                                                     ? colors.primary
                                                     : Colors.transparent,
                                                 borderRadius:
-                                                    BorderRadius.circular(21),
+                                                BorderRadius.circular(21),
                                               ),
                                               child: Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                                 children: [
                                                   Icon(
                                                     Icons.storefront_rounded,
                                                     size: 18,
                                                     color: _selectedRole ==
-                                                            UserRole.pemilikKost
+                                                        UserRole.pemilikKost
                                                         ? colors.onPrimary
                                                         : colors.onSurface,
                                                   ),
@@ -316,10 +316,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     style: TextStyle(
                                                       fontSize: 13,
                                                       fontWeight:
-                                                          FontWeight.w700,
+                                                      FontWeight.w700,
                                                       color: _selectedRole ==
-                                                              UserRole
-                                                                  .pemilikKost
+                                                          UserRole
+                                                              .pemilikKost
                                                           ? colors.onPrimary
                                                           : colors.onSurface,
                                                     ),
