@@ -14,7 +14,8 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _reports = <String>[];
-  String _category = 'Fasilitas kos';
+
+  String? _category;
 
   @override
   void dispose() {
@@ -40,41 +41,47 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     final colors = Theme.of(context).colorScheme;
     final isOwner = context.watch<AppState>().isOwner;
 
+    // Daftar opsi untuk Pemilik vs Pencari Kos
     final categoriesList = isOwner
         ? const [
-            DropdownMenuItem(
-              value: 'Keluhan Aplikasi',
-              child: Text('Keluhan Aplikasi'),
-            ),
-            DropdownMenuItem(
-              value: 'Bantuan Peta Location',
-              child: Text('Bantuan Peta Location'),
-            ),
-            DropdownMenuItem(
-              value: 'Informasi Akun Pemilik',
-              child: Text('Informasi Akun Pemilik'),
-            ),
-            DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
-          ]
+      DropdownMenuItem(
+        value: 'Keluhan Aplikasi',
+        child: Text('Keluhan Aplikasi'),
+      ),
+      DropdownMenuItem(
+        value: 'Bantuan Peta Location',
+        child: Text('Bantuan Peta Location'),
+      ),
+      DropdownMenuItem(
+        value: 'Informasi Akun Pemilik',
+        child: Text('Informasi Akun Pemilik'),
+      ),
+      DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
+    ]
         : const [
-            DropdownMenuItem(
-              value: 'Fasilitas kos',
-              child: Text('Fasilitas kos'),
-            ),
-            DropdownMenuItem(
-              value: 'Informasi kos tidak sesuai',
-              child: Text('Informasi kos tidak sesuai'),
-            ),
-            DropdownMenuItem(
-              value: 'Pemilik tidak merespon',
-              child: Text('Pemilik tidak merespon'),
-            ),
-            DropdownMenuItem(
-              value: 'Kendala aplikasi',
-              child: Text('Kendala aplikasi'),
-            ),
-            DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
-          ];
+      DropdownMenuItem(
+        value: 'Fasilitas kos',
+        child: Text('Fasilitas kos'),
+      ),
+      DropdownMenuItem(
+        value: 'Informasi kos tidak sesuai',
+        child: Text('Informasi kos tidak sesuai'),
+      ),
+      DropdownMenuItem(
+        value: 'Pemilik tidak merespon',
+        child: Text('Pemilik tidak merespon'),
+      ),
+      DropdownMenuItem(
+        value: 'Kendala aplikasi',
+        child: Text('Kendala aplikasi'),
+      ),
+      DropdownMenuItem(value: 'Lainnya', child: Text('Lainnya')),
+    ];
+
+    final availableValues = categoriesList.map((e) => e.value).toList();
+    if (_category == null || !availableValues.contains(_category)) {
+      _category = availableValues.first;
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pusat Pengaduan & Layanan')),
@@ -84,10 +91,10 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
           Text(
             isOwner ? 'Ada Kendala\nPengelolaan?' : 'Ada Kendala Atau\nPengaduan Kos?',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  height: 1.18,
-                  letterSpacing: -0.5,
-                ),
+              fontWeight: FontWeight.w800,
+              height: 1.18,
+              letterSpacing: -0.5,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -103,7 +110,8 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 DropdownButtonFormField<String>(
-                  initialValue: _category,
+                  // Menggunakan value dan bukannya initialValue agar selalu reaktif terhadap perubahan role
+                  value: _category,
                   decoration: const InputDecoration(
                     labelText: 'Kategori Laporan',
                     prefixIcon: Icon(Icons.category_outlined),
