@@ -4,7 +4,7 @@
 
 ## 1. Persona Utama
 
-* **Nama Persona**: Budi Santoso
+* **Nama Persona**: Pengguna
 * **Usia**: 19 Tahun
 * **Pekerjaan/Status**: Mahasiswa Undergraduate Universitas Sumatera Utara (USU)
 * **Latar Belakang**: Mahasiswa baru dari luar kota yang membutuhkan tempat tinggal di dekat lokasi kampus Fasilkom-TI.
