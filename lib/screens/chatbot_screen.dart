@@ -4,7 +4,14 @@ import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  final String? initialMessage;
+  final String? ownerName;
+
+  const ChatbotScreen({
+    super.key,
+    this.initialMessage,
+    this.ownerName
+  });
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
@@ -23,6 +30,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         isUser: false,
       ),
     ];
+
+    if (widget.initialMessage != null&& widget.initialMessage!.isNotEmpty) {
+      _messages.add(_ChatMessage(text: widget.initialMessage!, isUser: true));
+      _messages.add(const _ChatMessage(
+        text: 'Halo! Terima kasih Telah tertarik dengan kos ini. Ada yang ingin anda tanyakan?',
+        isUser: false,
+      ));
+    }
   }
 
   @override
@@ -55,8 +70,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         reply = 'Di Finding Kost, kos tersedia mulai dari Rp 600.000 per bulan. Anda bisa memfilter atau mencari berdasarkan budget Anda di halaman utama.';
       } else if (query.contains('peta') || query.contains('lokasi') || query.contains('map')) {
         reply = 'Buka tab "Peta Kos" untuk melihat titik lokasi kos secara langsung terintegrasi Google Maps di seluruh wilayah Medan.';
-      } else if (query.contains('wa') || query.contains('hubungi') || query.contains('pesan')) {
-        reply = 'Buka halaman detail kos pilihan Anda, lalu tekan tombol "Hubungi Pemilik (WhatsApp)" untuk langsung berkomunikasi dengan pengelola kos.';
+      } else if (query.contains('hubungi') || query.contains('pesan') || query.contains('chat') || query.contains('pemilik')) {
+        reply = 'Buka halaman detail kos pilihan Anda, lalu tekan tombol pesan (bagian atas kanan) untuk langsung berkomunikasi dengan pengelola kos.';
       } else if (query.contains('simpan') || query.contains('favorit')) {
         reply = 'Tekan ikon bookmark pada kartu atau halaman detail kos untuk menyimpannya ke daftar "Tersimpan".';
       } else {
@@ -77,9 +92,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     final colors = Theme.of(context).colorScheme;
     final isOwner = context.watch<AppState>().isOwner;
 
+    final String appBarTitle = widget.ownerName != null
+    ? 'Chat Pemilik'
+    :  (isOwner? 'Asisten aplikasi Kost' : 'Asisten Finding Kost');
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(isOwner ? 'Asisten Pemilik Kost' : 'Asisten Finding Kost'),
+        title: Text(appBarTitle),
       ),
       body: Column(
         children: [
@@ -127,29 +146,29 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 runSpacing: 6,
                 children: isOwner
                     ? [
-                        ActionChip(
-                          label: const Text('Cara tambah kos baru'),
-                          onPressed: () => _sendMessage('Cara tambah kos baru'),
-                        ),
-                        ActionChip(
-                          label: const Text('Cara ubah status penuh/tersedia'),
-                          onPressed: () => _sendMessage('Cara ubah status penuh'),
-                        ),
-                      ]
+                  ActionChip(
+                    label: const Text('Cara tambah kos baru'),
+                    onPressed: () => _sendMessage('Cara tambah kos baru'),
+                  ),
+                  ActionChip(
+                    label: const Text('Cara ubah status penuh/tersedia'),
+                    onPressed: () => _sendMessage('Cara ubah status penuh'),
+                  ),
+                ]
                     : [
-                        ActionChip(
-                          label: const Text('Kos di bawah 1 juta'),
-                          onPressed: () => _sendMessage('Cari kos di bawah 1 juta'),
-                        ),
-                        ActionChip(
-                          label: const Text('Cara buka di Google Maps'),
-                          onPressed: () => _sendMessage('Cara buka di Google Maps'),
-                        ),
-                        ActionChip(
-                          label: const Text('Cara hubungi pemilik WA'),
-                          onPressed: () => _sendMessage('Cara hubungi pemilik WA'),
-                        ),
-                      ],
+                  ActionChip(
+                    label: const Text('Kos di bawah 1 juta'),
+                    onPressed: () => _sendMessage('Cari kos di bawah 1 juta'),
+                  ),
+                  ActionChip(
+                    label: const Text('Cara buka di Google Maps'),
+                    onPressed: () => _sendMessage('Cara buka di Google Maps'),
+                  ),
+                  ActionChip(
+                    label: const Text('Cara hubungi pemilik'),
+                    onPressed: () => _sendMessage('Cara hubungi pemilik'),
+                  ),
+                ],
               ),
             ),
           Padding(
