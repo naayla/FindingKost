@@ -9,6 +9,7 @@ import '../models/user_role.dart';
 import '../providers/app_state.dart';
 import '../widgets/kost_image.dart';
 import 'form_item_screen.dart';
+import '../screens/chatbot_screen.dart';
 
 class DetailScreen extends StatelessWidget {
   final Kost item;
@@ -303,8 +304,6 @@ class DetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-
-    // Membaca state aplikasi dan role pengguna saat ini
     final appState = context.watch<AppState>();
     final currentUser = appState.currentUser;
     final isOwner = currentUser?.role == UserRole.pemilikKost;
@@ -319,6 +318,29 @@ class DetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Detail kos'),
         actions: [
+          //tombol chat/hubungi pemilik
+          if (!isOwner)
+            IconButton(
+              tooltip: 'Hubungi pemilik kos',
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              onPressed: () {
+                //notifikasi pesan masuk pemilik
+                appState.addNotification(
+                  'Ada pesan baru dari ${currentUser.name} mengenai kos "${item.title}".mau mastikan fasilitas dll',
+                  targetOwnerId: item.ownerId,
+                );
+                //navigasi halaman chat
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChatbotScreen(
+                      initialMessage: 'Halo ${item.ownerName}, saya tertarik dengan "${item.title}" (${item.price}). Apakah saya bisa menjadwalkan survei dan memastikan fasilitas dll yang tersedia?',
+                      ownerName: item.ownerName,
+                    ),
+                  ),
+                );
+              },
+            ),
           // Tombol Share
           IconButton(
             tooltip: 'Bagikan kos',

@@ -533,4 +533,18 @@ class AppState extends ChangeNotifier {
     _activityLogs.insert(0, message);
     notifyListeners();
   }
+
+  //notifikasi pemilik
+  final List<Map<String, dynamic>> _notifications = [];
+  List<Map<String, dynamic>> get notifications => _notifications;
+
+  void addNotification(String message, {required String targetOwnerId}) {
+    _notifications.insert(0, {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'message': message,
+      'targetOwnerId': targetOwnerId,
+      'createdAt': DateTime.now(),
+    });
+    notifyListeners();
+  }
 }
