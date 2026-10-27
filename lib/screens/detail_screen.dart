@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/booking_model.dart';
 import '../models/kost_model.dart';
+import '../models/message_model.dart';
 import '../models/review_model.dart';
 import '../models/user_role.dart';
 import '../providers/app_state.dart';
@@ -301,6 +302,66 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
+  void _showChatDialog(BuildContext context) {
+    final appState = context.read<AppState>();
+    final user = appState.currentUser;
+    final messageController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Chat Pemilik: ${item.ownerName}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Kos: ${item.title}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            const SizedBox(height: 4),
+            Text('Email Anda: ${user.email}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: messageController,
+              decoration: const InputDecoration(
+                hintText: 'Tulis pesan / tanyakan ketersediaan kamar...',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.all(12),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (messageController.text.trim().isEmpty) return;
+              appState.sendOwnerMessage(
+                MessageModel(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  kostId: item.id,
+                  kostTitle: item.title,
+                  seekerName: user.name,
+                  seekerEmail: user.email,
+                  message: messageController.text.trim(),
+                  createdAt: DateTime.now(),
+                  isRead: false,
+                ),
+              );
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Pesan & notifikasi terkirim ke pemilik kos!')),
+              );
+            },
+            child: const Text('Kirim Pesan'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -540,16 +601,34 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          // TOMBOL AJUKAN SEWA / BOOKING
+          // TOMBOL AJUKAN SEWA / BOOKING & CHAT
           if (!isOwner) ...[
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: FilledButton.icon(
-                onPressed: () => _showBookingDialog(context),
-                icon: const Icon(Icons.bookmark_add_outlined),
-                label: const Text('Ajukan Sewa / Booking Kamar', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: SizedBox(
+                    height: 50,
+                    child: FilledButton.icon(
+                      onPressed: () => _showBookingDialog(context),
+                      icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                      label: const Text('Ajukan Sewa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: SizedBox(
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showChatDialog(context),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                      label: const Text('Chat Pemilik', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 22),
           ],

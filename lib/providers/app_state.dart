@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import '../models/user_role.dart';
 import '../models/booking_model.dart';
 import '../models/review_model.dart';
+import '../models/message_model.dart';
 
 class AppState extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -532,6 +533,36 @@ class AppState extends ChangeNotifier {
   void logActivity(String message) {
     _activityLogs.insert(0, message);
     notifyListeners();
+  }
+
+  // --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
+  final List<MessageModel> _ownerMessages = [
+    MessageModel(
+      id: 'm1',
+      kostId: '1',
+      kostTitle: 'Kos Bahagia Medan Baru',
+      seekerName: 'Budi Santoso',
+      seekerEmail: 'budi.santoso@example.com',
+      message: 'Halo Pak/Ibu, apakah kamar untuk bulan depan masih tersedia?',
+      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
+      isRead: false,
+    ),
+  ];
+
+  List<MessageModel> get ownerMessages => _ownerMessages;
+
+  void sendOwnerMessage(MessageModel msg) {
+    _ownerMessages.insert(0, msg);
+    _activityLogs.insert(0, 'Mengirim pesan chat ke pemilik kos ${msg.kostTitle}');
+    notifyListeners();
+  }
+
+  void markMessageAsRead(String id) {
+    final index = _ownerMessages.indexWhere((m) => m.id == id);
+    if (index != -1) {
+      _ownerMessages[index].isRead = true;
+      notifyListeners();
+    }
   }
 
   //notifikasi pemilik
