@@ -84,10 +84,10 @@ class _LoginScreenState extends State<LoginScreen> {
           id: 'user_seeker_1',
           name: (savedName != null && savedName.isNotEmpty)
               ? savedName
-              : 'Nayla Syifa Tanjung',
+              : 'Pengguna',
           email: (savedEmail != null && savedEmail.isNotEmpty)
               ? savedEmail
-              : (inputEmail.isNotEmpty ? inputEmail : 'nayla@example.com'),
+              : (inputEmail.isNotEmpty ? inputEmail : 'pengguna@example.com'),
           phone: (savedPhone != null && savedPhone.isNotEmpty)
               ? savedPhone
               : '+62 812 3456 7890',
