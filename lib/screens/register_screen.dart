@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/user_role.dart';
 import '../providers/app_state.dart';
 
@@ -154,7 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 24),
                           Card(
                             elevation: isDarkMode ? 1 : 2,
-                            shadowColor: Colors.black.withOpacity(0.06),
+                            shadowColor: Colors.black.withValues(alpha: 0.06),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24),
                             ),

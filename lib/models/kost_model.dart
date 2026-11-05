@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class Kost {
   final String id;
   final String categoryId;
