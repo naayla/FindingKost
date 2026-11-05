@@ -97,8 +97,8 @@ class DetailScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 48,
                 child: FilledButton(
-                  onPressed: () {
-                    appState.addBooking(
+                  onPressed: () async {
+                    await appState.submitBookingAsync(
                       BookingModel(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
                         kostId: item.id,
@@ -111,12 +111,22 @@ class DetailScreen extends StatelessWidget {
                         createdAt: DateTime.now(),
                       ),
                     );
-                    Navigator.pop(sheetContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Pengajuan sewa berhasil dikirim ke pemilik kos!')),
-                    );
+                    if (sheetContext.mounted) {
+                      Navigator.pop(sheetContext);
+                    }
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Pengajuan sewa berhasil dikirim ke backend server!')),
+                      );
+                    }
                   },
-                  child: const Text('Kirim Pengajuan Sewa'),
+                  child: appState.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Kirim Pengajuan Sewa'),
                 ),
               ),
             ],
@@ -277,9 +287,9 @@ class DetailScreen extends StatelessWidget {
               child: const Text('Batal'),
             ),
             FilledButton(
-              onPressed: () {
+              onPressed: () async {
                 if (commentController.text.trim().isEmpty) return;
-                appState.addReview(
+                await appState.submitReviewAsync(
                   ReviewModel(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     kostId: item.id,
@@ -289,12 +299,22 @@ class DetailScreen extends StatelessWidget {
                     createdAt: DateTime.now(),
                   ),
                 );
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ulasan berhasil ditambahkan!')),
-                );
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Ulasan berhasil dikirim ke server backend!')),
+                  );
+                }
               },
-              child: const Text('Kirim Ulasan'),
+              child: appState.isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Kirim Ulasan'),
             ),
           ],
         ),
@@ -336,9 +356,9 @@ class DetailScreen extends StatelessWidget {
             child: const Text('Batal'),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
               if (messageController.text.trim().isEmpty) return;
-              appState.sendOwnerMessage(
+              await appState.sendMessageAsync(
                 MessageModel(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   kostId: item.id,
@@ -350,12 +370,22 @@ class DetailScreen extends StatelessWidget {
                   isRead: false,
                 ),
               );
-              Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Pesan & notifikasi terkirim ke pemilik kos!')),
-              );
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext);
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Pesan & notifikasi terkirim ke backend server pemilik kos!')),
+                );
+              }
             },
-            child: const Text('Kirim Pesan'),
+            child: appState.isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text('Kirim Pesan'),
           ),
         ],
       ),

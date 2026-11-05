@@ -6,6 +6,7 @@ import '../models/user_role.dart';
 import '../models/booking_model.dart';
 import '../models/review_model.dart';
 import '../models/message_model.dart';
+import '../services/api_service.dart';
 
 class AppState extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -536,18 +537,7 @@ class AppState extends ChangeNotifier {
   }
 
   // --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
-  final List<MessageModel> _ownerMessages = [
-    MessageModel(
-      id: 'm1',
-      kostId: '1',
-      kostTitle: 'Kos Bahagia Medan Baru',
-      seekerName: 'Budi Santoso',
-      seekerEmail: 'budi.santoso@example.com',
-      message: 'Halo Pak/Ibu, apakah kamar untuk bulan depan masih tersedia?',
-      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-      isRead: false,
-    ),
-  ];
+  final List<MessageModel> _ownerMessages = [];
 
   List<MessageModel> get ownerMessages => _ownerMessages;
 
@@ -561,6 +551,47 @@ class AppState extends ChangeNotifier {
     final index = _ownerMessages.indexWhere((m) => m.id == id);
     if (index != -1) {
       _ownerMessages[index].isRead = true;
+      notifyListeners();
+    }
+  }
+
+  // --- BACKEND API SERVICE INTEGRATION ---
+  final ApiService _apiService = ApiService();
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  Future<void> submitBookingAsync(BookingModel booking) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _apiService.submitBooking(booking);
+      addBooking(booking);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> sendMessageAsync(MessageModel message) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _apiService.sendMessage(message);
+      sendOwnerMessage(message);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> submitReviewAsync(ReviewModel review) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _apiService.submitReview(review);
+      addReview(review);
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
