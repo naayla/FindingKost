@@ -17,7 +17,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'nana@example.com');
+  final _emailController = TextEditingController(text: 'pengguna@example.com');
   final _passwordController = TextEditingController(text: '12345678');
   bool _obscurePassword = true;
 
@@ -65,17 +65,17 @@ class _LoginScreenState extends State<LoginScreen> {
           id: 'user_owner_1',
           name: (savedName != null && savedName.isNotEmpty)
               ? savedName
-              : 'Ibu Hj. Aminah',
+              : 'Pemilik Kos',
           email: (savedEmail != null && savedEmail.isNotEmpty)
               ? savedEmail
-              : (inputEmail.isNotEmpty ? inputEmail : 'owner.aminah@example.com'),
+              : (inputEmail.isNotEmpty ? inputEmail : 'pemilik@example.com'),
           phone: (savedPhone != null && savedPhone.isNotEmpty)
               ? savedPhone
               : '+62 813 9876 5432',
           role: UserRole.pemilikKost,
           institutionOrBusiness: (savedInstitution != null && savedInstitution.isNotEmpty)
               ? savedInstitution
-              : 'Pemilik Kos Harmoni & Grand Residence',
+              : 'Pemilik Kos Mandiri',
         ),
       );
     } else {
