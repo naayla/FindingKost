@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/user_model.dart';
 import '../models/user_role.dart';
 import '../providers/app_state.dart';
@@ -19,6 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController(text: 'pengguna@example.com');
   final _passwordController = TextEditingController(text: '12345678');
+  UserRole _selectedRole = UserRole.pencariKost;
   bool _obscurePassword = true;
 
   @override
@@ -69,13 +69,9 @@ class _LoginScreenState extends State<LoginScreen> {
           email: (savedEmail != null && savedEmail.isNotEmpty)
               ? savedEmail
               : (inputEmail.isNotEmpty ? inputEmail : 'pemilik@example.com'),
-          phone: (savedPhone != null && savedPhone.isNotEmpty)
-              ? savedPhone
-              : '+62 813 9876 5432',
+          phone: savedPhone ?? '',
           role: UserRole.pemilikKost,
-          institutionOrBusiness: (savedInstitution != null && savedInstitution.isNotEmpty)
-              ? savedInstitution
-              : 'Pemilik Kos Mandiri',
+          institutionOrBusiness: savedInstitution ?? '',
         ),
       );
     } else {
@@ -88,13 +84,9 @@ class _LoginScreenState extends State<LoginScreen> {
           email: (savedEmail != null && savedEmail.isNotEmpty)
               ? savedEmail
               : (inputEmail.isNotEmpty ? inputEmail : 'pengguna@example.com'),
-          phone: (savedPhone != null && savedPhone.isNotEmpty)
-              ? savedPhone
-              : '+62 812 3456 7890',
+          phone: savedPhone ?? '',
           role: UserRole.pencariKost,
-          institutionOrBusiness: (savedInstitution != null && savedInstitution.isNotEmpty)
-              ? savedInstitution
-              : 'Universitas Sumatera Utara',
+          institutionOrBusiness: savedInstitution ?? '',
         ),
       );
     }
@@ -116,6 +108,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final headerTextColor = isDarkMode ? Colors.white : const Color(0xFF1E293B);
     final subtextColor = isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+
+    final isSeeker = _selectedRole == UserRole.pencariKost;
 
     return Scaffold(
       body: Container(
@@ -177,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Selamat datang finder',
+                            isSeeker ? 'Selamat Datang Finder' : 'Portal Pemilik Kos',
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineMedium
@@ -189,9 +183,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 8),
                           SizedBox(
-                            width: 280,
+                            width: 290,
                             child: Text(
-                              'Masuk untuk mulai mencari dan memesan kos impianmu.',
+                              isSeeker
+                                  ? 'Masuk untuk mulai mencari dan memesan kos impianmu.'
+                                  : 'Masuk untuk mengelola properti, kamar, dan pesan masuk.',
                               style: TextStyle(
                                 color: subtextColor,
                                 fontSize: 14,
@@ -202,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Form Card (Khusus Pencari Kost)
+                          // Unified Clean Card with Role Switcher Tab inside
                           Card(
                             elevation: isDarkMode ? 1 : 4,
                             shadowColor: Colors.black.withValues(alpha: 0.08),
@@ -217,20 +213,105 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.search_rounded, color: colors.primary, size: 20),
-                                      const SizedBox(width: 8),
-                                      const Text(
-                                        'Masuk sebagai Pencari Kost',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
+                                  // Sleek Tab Switcher inside Card
+                                  Container(
+                                    height: 46,
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: colors.surfaceContainerHighest
+                                          .withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(23),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => setState(() =>
+                                                _selectedRole =
+                                                    UserRole.pencariKost),
+                                            child: Container(
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                color: isSeeker
+                                                    ? colors.primary
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(19),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.search_rounded,
+                                                    size: 16,
+                                                    color: isSeeker
+                                                        ? colors.onPrimary
+                                                        : colors.onSurface,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    'Pencari Kos',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: isSeeker
+                                                          ? colors.onPrimary
+                                                          : colors.onSurface,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => setState(() =>
+                                                _selectedRole =
+                                                    UserRole.pemilikKost),
+                                            child: Container(
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                color: !isSeeker
+                                                    ? colors.primary
+                                                    : Colors.transparent,
+                                                borderRadius:
+                                                    BorderRadius.circular(19),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.storefront_rounded,
+                                                    size: 16,
+                                                    color: !isSeeker
+                                                        ? colors.onPrimary
+                                                        : colors.onSurface,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    'Pemilik Kos',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: !isSeeker
+                                                          ? colors.onPrimary
+                                                          : colors.onSurface,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  const Divider(height: 24),
+                                  const SizedBox(height: 20),
 
                                   // Input Email
                                   Text(
@@ -301,13 +382,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 20),
 
-                                  // Tombol Masuk Utama (Pencari Kost)
+                                  // Tombol Masuk Dinamis
                                   SizedBox(
                                     width: double.infinity,
                                     height: 50,
                                     child: FilledButton(
                                       onPressed: () {
-                                        _loginAsRole(UserRole.pencariKost);
+                                        _loginAsRole(_selectedRole);
                                       },
                                       style: FilledButton.styleFrom(
                                         shape: RoundedRectangleBorder(
@@ -315,9 +396,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                               BorderRadius.circular(25),
                                         ),
                                       ),
-                                      child: const Text(
-                                        'Masuk sebagai Pencari Kost',
-                                        style: TextStyle(
+                                      child: Text(
+                                        isSeeker
+                                            ? 'Masuk sebagai Pencari Kost'
+                                            : 'Masuk sebagai Pemilik Kost',
+                                        style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -326,7 +409,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 16),
 
-                                  // Opsi Daftar
+                                  // Opsi Daftar (Tampil untuk Pencari & Pemilik)
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -361,32 +444,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ],
                                   ),
                                 ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Tombol Alternatif Portal Pemilik Kost
-                          SizedBox(
-                            width: double.infinity,
-                            height: 46,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                _loginAsRole(UserRole.pemilikKost);
-                              },
-                              icon: const Icon(Icons.storefront_rounded, size: 18),
-                              label: const Text(
-                                'Masuk sebagai Pemilik Kost (Kelola Properti)',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(23),
-                                ),
-                                side: BorderSide(color: colors.primary.withValues(alpha: 0.5)),
                               ),
                             ),
                           ),

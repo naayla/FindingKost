@@ -501,6 +501,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateBookingStatus(String id, String newStatus) {
+    final index = _bookings.indexWhere((b) => b.id == id);
+    if (index != -1) {
+      _bookings[index].status = newStatus;
+      _activityLogs.insert(0, 'Status booking ${_bookings[index].kostTitle} diubah menjadi $newStatus');
+      notifyListeners();
+    }
+  }
+
   final Map<String, List<ReviewModel>> _reviewsMap = {
     '1': [
       ReviewModel(id: 'r1', kostId: '1', userName: 'Nayla Syifa', rating: 5.0, comment: 'Kos sangat bersih dan dekat kampus USU!', createdAt: DateTime.now().subtract(const Duration(days: 2))),
