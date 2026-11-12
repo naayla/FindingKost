@@ -4,9 +4,13 @@ class BookingModel {
   final String kostTitle;
   final String kostImageUrl;
   final String userName;
+  final String userEmail;
+  final String seekerGender;
+  final String seekerMarriageStatus;
+  final String occupantsCount;
   final String durationMonths;
   final String startDate;
-  final String status; // 'Menunggu Konfirmasi', 'Disetujui', 'Ditolak'
+  String status; // 'Menunggu Konfirmasi', 'Disetujui', 'Ditolak'
   final DateTime createdAt;
 
   BookingModel({
@@ -15,6 +19,10 @@ class BookingModel {
     required this.kostTitle,
     required this.kostImageUrl,
     required this.userName,
+    required this.userEmail,
+    required this.seekerGender,
+    required this.seekerMarriageStatus,
+    required this.occupantsCount,
     required this.durationMonths,
     required this.startDate,
     required this.status,

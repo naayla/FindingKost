@@ -31,6 +31,9 @@ class _FormItemScreenState extends State<FormItemScreen> {
   late bool _isAvailable;
   String? _selectedCategoryId;
   late List<String> _selectedFacilities;
+  late String _genderRule;
+  late String _marriageStatus;
+  late String _maxOccupants;
 
   static const List<String> _availableFacilityOptions = [
     'WiFi',
@@ -76,6 +79,9 @@ class _FormItemScreenState extends State<FormItemScreen> {
     _selectedFacilities = List.from(
       item?.facilities ?? ['WiFi', 'Kamar Mandi Dalam', 'AC', 'Kasur'],
     );
+    _genderRule = item?.genderRule ?? 'Campur / Bebas';
+    _marriageStatus = item?.marriageStatus ?? 'Pasutri Diizinkan';
+    _maxOccupants = item?.maxOccupants ?? '2 Orang / Kamar';
   }
 
   @override
@@ -129,6 +135,9 @@ class _FormItemScreenState extends State<FormItemScreen> {
       ownerPhone: _ownerPhoneController.text.trim(),
       description: _descriptionController.text.trim(),
       isAvailable: _isAvailable,
+      genderRule: _genderRule,
+      marriageStatus: _marriageStatus,
+      maxOccupants: _maxOccupants,
     );
 
     if (isEditing) {
@@ -311,6 +320,50 @@ class _FormItemScreenState extends State<FormItemScreen> {
                 labelText: 'Nomor WA / Telepon Pemilik',
                 prefixIcon: Icon(Icons.phone_outlined),
               ),
+            ),
+            const SizedBox(height: 14),
+
+            const Text(
+              'Detail Aturan & Kapasitas Kamar (Kos Campur/Umum)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _genderRule,
+              decoration: const InputDecoration(
+                labelText: 'Aturan Gender Kamar / Area',
+                prefixIcon: Icon(Icons.people_outline_rounded),
+              ),
+              items: ['Campur / Bebas', 'Khusus Putra', 'Khusus Putri']
+                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                  .toList(),
+              onChanged: (val) => setState(() => _genderRule = val!),
+            ),
+            const SizedBox(height: 14),
+
+            DropdownButtonFormField<String>(
+              value: _marriageStatus,
+              decoration: const InputDecoration(
+                labelText: 'Status Menikah (Pasutri)',
+                prefixIcon: Icon(Icons.family_restroom_outlined),
+              ),
+              items: ['Pasutri Diizinkan', 'Khusus Belum Menikah', 'Bebas']
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                  .toList(),
+              onChanged: (val) => setState(() => _marriageStatus = val!),
+            ),
+            const SizedBox(height: 14),
+
+            DropdownButtonFormField<String>(
+              value: _maxOccupants,
+              decoration: const InputDecoration(
+                labelText: 'Kapasitas Orang per Kamar',
+                prefixIcon: Icon(Icons.group_outlined),
+              ),
+              items: ['1 Orang / Kamar', '2 Orang / Kamar', 'Bebas (Maks 3 Orang)']
+                  .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                  .toList(),
+              onChanged: (val) => setState(() => _maxOccupants = val!),
             ),
             const SizedBox(height: 14),
 
