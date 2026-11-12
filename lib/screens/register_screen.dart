@@ -16,6 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _institutionController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -28,6 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _institutionController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -42,10 +44,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     await prefs.setString('user_password', _passwordController.text.trim());
     await prefs.setString('user_phone', _phoneController.text.trim());
     await prefs.setString(
+      'user_role',
+      _selectedRole == UserRole.pemilikKost ? 'pemilik' : 'pencari',
+    );
+    await prefs.setString(
       'user_institution',
-      _selectedRole == UserRole.pemilikKost
-          ? 'Pemilik Kost Mandiri'
-          : 'Universitas Sumatera Utara',
+      _institutionController.text.trim().isNotEmpty
+          ? _institutionController.text.trim()
+          : (_selectedRole == UserRole.pemilikKost ? 'Pemilik Kos Mandiri' : ''),
     );
 
     if (mounted) {
@@ -66,29 +72,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final headerTextColor = isDarkMode ? Colors.white : const Color(0xFF1E293B);
     const greenThemeColor = Color(0xFF2D6A4F);
-    final textFieldFillColor = isDarkMode ? colors.surfaceContainer : const Color(0xFFE5E0D8);
 
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: isDarkMode
               ? LinearGradient(
-            colors: [
-              colors.surface,
-              colors.surfaceContainer,
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          )
+                  colors: [
+                    colors.surface,
+                    colors.surfaceContainer,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
               : const LinearGradient(
-            colors: [
-              Color(0xFFC2D4C8),
-              Color(0xFFD9CFBF),
-              Color(0xFFE3DCCE),
-            ],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
+                  colors: [
+                    Color(0xFFE2EBE4),
+                    Color(0xFFF7F0E6),
+                    Color(0xFFFAF8F5),
+                  ],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                ),
         ),
         child: SafeArea(
           child: Column(
@@ -159,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             color: isDarkMode
                                 ? colors.surfaceContainer
-                                : const Color(0xFFF2EBE1),
+                                : Colors.white,
                             child: Padding(
                               padding: const EdgeInsets.all(20.0),
                               child: Form(
@@ -167,70 +172,111 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Align(
-                                      alignment: Alignment.center,
-                                      child: SizedBox(
-                                        height: 48,
-                                        child: SegmentedButton<UserRole>(
-                                          style: ButtonStyle(
-                                            shape: WidgetStateProperty.all(
-                                              RoundedRectangleBorder(
-                                                borderRadius:
-                                                BorderRadius.circular(25),
-                                              ),
-                                            ),
-                                            backgroundColor:
-                                            WidgetStateProperty.resolveWith<Color>(
-                                                  (Set<WidgetState> states) {
-                                                if (states.contains(
-                                                    WidgetState.selected)) {
-                                                  return isDarkMode
+                                    Container(
+                                      height: 46,
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: colors.surfaceContainerHighest
+                                            .withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(23),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () => setState(() =>
+                                                  _selectedRole =
+                                                      UserRole.pencariKost),
+                                              child: Container(
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  color: _selectedRole ==
+                                                          UserRole.pencariKost
                                                       ? colors.primary
-                                                      : greenThemeColor;
-                                                }
-                                                return Colors.transparent;
-                                              },
-                                            ),
-                                            foregroundColor:
-                                            WidgetStateProperty.resolveWith<Color>(
-                                                  (Set<WidgetState> states) {
-                                                if (states.contains(
-                                                    WidgetState.selected)) {
-                                                  return Colors.white;
-                                                }
-                                                return isDarkMode
-                                                    ? Colors.white70
-                                                    : const Color(0xFF333333);
-                                              },
-                                            ),
-                                            textStyle: WidgetStateProperty.all(
-                                              const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
+                                                      : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(19),
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.search_rounded,
+                                                      size: 16,
+                                                      color: _selectedRole ==
+                                                              UserRole
+                                                                  .pencariKost
+                                                          ? colors.onPrimary
+                                                          : colors.onSurface,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      'Pencari Kost',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: _selectedRole ==
+                                                                UserRole
+                                                                    .pencariKost
+                                                            ? colors.onPrimary
+                                                            : colors.onSurface,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
                                           ),
-                                          segments: const [
-                                            ButtonSegment<UserRole>(
-                                              value: UserRole.pencariKost,
-                                              label: Text('Pencari Kost'),
-                                              icon: Icon(Icons.home_rounded,
-                                                  size: 18),
+                                          Expanded(
+                                            child: GestureDetector(
+                                              onTap: () => setState(() =>
+                                                  _selectedRole =
+                                                      UserRole.pemilikKost),
+                                              child: Container(
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  color: _selectedRole ==
+                                                          UserRole.pemilikKost
+                                                      ? colors.primary
+                                                      : Colors.transparent,
+                                                  borderRadius:
+                                                      BorderRadius.circular(19),
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.storefront_rounded,
+                                                      size: 16,
+                                                      color: _selectedRole ==
+                                                              UserRole
+                                                                  .pemilikKost
+                                                          ? colors.onPrimary
+                                                          : colors.onSurface,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      'Pemilik Kos',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: _selectedRole ==
+                                                                UserRole
+                                                                    .pemilikKost
+                                                            ? colors.onPrimary
+                                                            : colors.onSurface,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
-                                            ButtonSegment<UserRole>(
-                                              value: UserRole.pemilikKost,
-                                              label: Text('Pemilik Kost'),
-                                              icon: Icon(Icons.home_outlined,
-                                                  size: 18),
-                                            ),
-                                          ],
-                                          selected: {_selectedRole},
-                                          onSelectionChanged: (newSelection) {
-                                            setState(() {
-                                              _selectedRole = newSelection.first;
-                                            });
-                                          },
-                                        ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(height: 20),
@@ -242,8 +288,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           ? 'Nama tidak boleh kosong'
                                           : null,
                                       decoration: InputDecoration(
-                                        filled: true,
-                                        fillColor: textFieldFillColor,
+
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,
@@ -276,8 +321,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         return null;
                                       },
                                       decoration: InputDecoration(
-                                        filled: true,
-                                        fillColor: textFieldFillColor,
+
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,
@@ -295,18 +339,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 16),
-                                    if (_selectedRole == UserRole.pemilikKost) ...[
+                                    if (_selectedRole == UserRole.pencariKost) ...[
+                                      TextFormField(
+                                        controller: _institutionController,
+                                        style: const TextStyle(fontSize: 14),
+                                        decoration: InputDecoration(
+                                          contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 14,
+                                            horizontal: 16,
+                                          ),
+                                          prefixIcon: const Icon(
+                                              Icons.school_outlined,
+                                              size: 20),
+                                          hintText: 'Institusi / Kampus (Opsional)',
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                            BorderRadius.circular(16),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                    ] else ...[
                                       TextFormField(
                                         controller: _phoneController,
                                         keyboardType: TextInputType.phone,
                                         style: const TextStyle(fontSize: 14),
                                         validator: (value) =>
                                         value == null || value.trim().isEmpty
-                                            ? 'Nomor HP tidak boleh kosong'
+                                            ? 'Nomor WhatsApp tidak boleh kosong'
                                             : null,
                                         decoration: InputDecoration(
-                                          filled: true,
-                                          fillColor: textFieldFillColor,
                                           contentPadding:
                                           const EdgeInsets.symmetric(
                                             vertical: 14,
@@ -340,8 +404,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         return null;
                                       },
                                       decoration: InputDecoration(
-                                        filled: true,
-                                        fillColor: textFieldFillColor,
+
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,
@@ -388,8 +451,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         return null;
                                       },
                                       decoration: InputDecoration(
-                                        filled: true,
-                                        fillColor: textFieldFillColor,
+
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,

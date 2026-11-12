@@ -44,8 +44,12 @@ class DetailScreen extends StatelessWidget {
   void _showBookingDialog(BuildContext context) {
     final appState = context.read<AppState>();
     final userName = appState.currentUser.name;
+    final userEmail = appState.currentUser.email;
     String duration = '3 Bulan';
     String startDate = 'Segera (Bulan ini)';
+    String seekerGender = 'Pria';
+    String seekerMarriageStatus = 'Belum Menikah';
+    String occupantsCount = '1 Orang';
 
     showModalBottomSheet(
       context: context,
@@ -57,69 +61,108 @@ class DetailScreen extends StatelessWidget {
         builder: (context, setStateSheet) => Padding(
           padding: EdgeInsets.fromLTRB(
               24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Ajukan Sewa / Booking Kos',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                item.title,
-                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700),
-              ),
-              const Divider(height: 24),
-              const Text('Durasi Sewa', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                initialValue: duration,
-                decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                items: ['1 Bulan', '3 Bulan', '6 Bulan', '1 Tahun']
-                    .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                    .toList(),
-                onChanged: (val) => setStateSheet(() => duration = val!),
-              ),
-              const SizedBox(height: 16),
-              const Text('Rencana Masuk', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                initialValue: startDate,
-                decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
-                items: ['Segera (Bulan ini)', 'Bulan Depan', '2 Bulan Lagi']
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (val) => setStateSheet(() => startDate = val!),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed: () {
-                    appState.addBooking(
-                      BookingModel(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        kostId: item.id,
-                        kostTitle: item.title,
-                        kostImageUrl: item.imageUrl,
-                        userName: userName,
-                        durationMonths: duration,
-                        startDate: startDate,
-                        status: 'Menunggu Konfirmasi',
-                        createdAt: DateTime.now(),
-                      ),
-                    );
-                    Navigator.pop(sheetContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Pengajuan sewa berhasil dikirim!')),
-                    );
-                  },
-                  child: const Text('Kirim Pengajuan Sewa'),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ajukan Sewa / Booking Kamar',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  item.title,
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700),
+                ),
+                const Divider(height: 24),
+                const Text('Gender / Jenis Kelamin', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: seekerGender,
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  items: ['Pria', 'Wanita']
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  onChanged: (val) => setStateSheet(() => seekerGender = val!),
+                ),
+                const SizedBox(height: 14),
+                const Text('Status Pernikahan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: seekerMarriageStatus,
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  items: ['Belum Menikah', 'Pasutri / Menikah']
+                      .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                      .toList(),
+                  onChanged: (val) => setStateSheet(() => seekerMarriageStatus = val!),
+                ),
+                const SizedBox(height: 14),
+                const Text('Jumlah Penghuni / Orang', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: occupantsCount,
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  items: ['1 Orang', '2 Orang', '3 Orang']
+                      .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                      .toList(),
+                  onChanged: (val) => setStateSheet(() => occupantsCount = val!),
+                ),
+                const SizedBox(height: 14),
+                const Text('Durasi Sewa', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: duration,
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  items: ['1 Bulan', '3 Bulan', '6 Bulan', '1 Tahun']
+                      .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                      .toList(),
+                  onChanged: (val) => setStateSheet(() => duration = val!),
+                ),
+                const SizedBox(height: 14),
+                const Text('Rencana Masuk', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: startDate,
+                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  items: ['Segera (Bulan ini)', 'Bulan Depan', '2 Bulan Lagi']
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
+                  onChanged: (val) => setStateSheet(() => startDate = val!),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: () {
+                      appState.addBooking(
+                        BookingModel(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          kostId: item.id,
+                          kostTitle: item.title,
+                          kostImageUrl: item.imageUrl,
+                          userName: userName,
+                          userEmail: userEmail,
+                          seekerGender: seekerGender,
+                          seekerMarriageStatus: seekerMarriageStatus,
+                          occupantsCount: occupantsCount,
+                          durationMonths: duration,
+                          startDate: startDate,
+                          status: 'Menunggu Konfirmasi',
+                          createdAt: DateTime.now(),
+                        ),
+                      );
+                      Navigator.pop(sheetContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Pengajuan sewa beserta data preferensi terkirim ke pemilik!')),
+                      );
+                    },
+                    child: const Text('Kirim Pengajuan Sewa'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

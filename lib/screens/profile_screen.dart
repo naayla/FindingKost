@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user_role.dart';
 import '../providers/app_state.dart';
 import 'activity_screen.dart';
+import 'main_navigation_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,22 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  // Fungsi untuk mereset/menghapus data SharedPreferences
-  Future<void> _resetAccountData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Menghapus semua data tersimpan
-    setState(() {
-      _savedName = '';
-      _savedEmail = '';
-      _savedPhone = '';
-      _savedInstitution = '';
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data akun berhasil direset. Profil sekarang kosong.')),
-      );
-    }
-  }
+
 
   String _getInitials(String name) {
     List<String> names = name.trim().split(' ');
@@ -63,7 +50,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final currentUser = context.watch<AppState>().currentUser;
+    final appState = context.watch<AppState>();
+    final currentUser = appState.currentUser;
+    final isOwner = currentUser?.role == UserRole.pemilikKost;
 
     final userName = _savedName.isNotEmpty
         ? _savedName
@@ -141,9 +130,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Akun Pencari Kost',
-                      style: TextStyle(fontSize: 11, color: Colors.white),
+                    child: Text(
+                      isOwner ? 'Akun Pemilik Kost' : 'Akun Pencari Kost',
+                      style: const TextStyle(fontSize: 11, color: Colors.white),
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -161,9 +150,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(width: 10),
                       ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () {
+                          final newRole = isOwner ? UserRole.pencariKost : UserRole.pemilikKost;
+                          appState.setRole(newRole);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+                          );
+                        },
                         icon: const Icon(Icons.swap_horiz, size: 14, color: Color(0xFF2D5545)),
-                        label: const Text('Mode Pemilik', style: TextStyle(color: Color(0xFF2D5545), fontSize: 12, fontWeight: FontWeight.bold)),
+                        label: Text(
+                          isOwner ? 'Mode Pencari' : 'Mode Pemilik',
+                          style: const TextStyle(color: Color(0xFF2D5545), fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -228,44 +227,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
 
-            const SizedBox(height: 20),
-            InkWell(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ActivityScreen()),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colors.primaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+            if (!isOwner) ...[
+              const SizedBox(height: 20),
+              InkWell(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ActivityScreen()),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.history_edu_rounded, color: colors.primary),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Riwayat Booking & Aktivitas',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Lihat status pengajuan sewa dan log aktivitas',
-                            style: TextStyle(fontSize: 11, color: Colors.grey),
-                          ),
-                        ],
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.history_edu_rounded, color: colors.primary),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Riwayat Booking & Aktivitas',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Lihat status pengajuan sewa dan log aktivitas',
+                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                  ],
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
 
             const SizedBox(height: 24),
 
@@ -281,42 +282,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Email Registered',
               subtitle: userEmail.isEmpty ? '-' : userEmail,
             ),
-            const SizedBox(height: 10),
-
-            _buildInfoCard(
-              icon: Icons.phone_outlined,
-              title: 'Nomor WhatsApp / Kontak',
-              subtitle: userPhone.isEmpty ? '-' : userPhone,
-            ),
-            const SizedBox(height: 10),
-
-            _buildInfoCard(
-              icon: Icons.school_outlined,
-              title: 'Institusi / Kampus',
-              subtitle: userCampus.isEmpty ? '-' : userCampus,
-            ),
-
-            const SizedBox(height: 30),
-
-            // TOMBOL RESET / KELUAR AKUN
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _resetAccountData,
-                icon: const Icon(Icons.logout_rounded, color: Colors.red),
-                label: const Text(
-                  'Reset Akun / Kosongkan Data (Demo)',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            if (isOwner) ...[
+              if (userPhone.isNotEmpty && userPhone != '-') ...[
+                const SizedBox(height: 10),
+                _buildInfoCard(
+                  icon: Icons.phone_outlined,
+                  title: 'Nomor WhatsApp / Kontak',
+                  subtitle: userPhone,
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.redAccent),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+              ],
+            ] else ...[
+              if (userCampus.isNotEmpty && userCampus != '-') ...[
+                const SizedBox(height: 10),
+                _buildInfoCard(
+                  icon: Icons.school_outlined,
+                  title: 'Institusi / Kampus',
+                  subtitle: userCampus,
                 ),
-              ),
-            ),
+              ],
+            ],
           ],
         ),
       ),
