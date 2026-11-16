@@ -1,6 +1,6 @@
 class MainItem {
   final String id;
-  final String categoryId; // Relasi ID ke Category
+  final String categoryId;
   String title;
   String description;
   double price;

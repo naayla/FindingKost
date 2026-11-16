@@ -118,7 +118,6 @@ class OwnerInboxScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            // Tab 1: Pesan Chat Masuk
             messages.isEmpty
                 ? Center(
                     child: Column(
@@ -245,7 +244,6 @@ class OwnerInboxScreen extends StatelessWidget {
                     },
                   ),
 
-            // Tab 2: Pengajuan Sewa (Booking) Masuk dari Pencari
             bookings.isEmpty
                 ? Center(
                     child: Column(

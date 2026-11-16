@@ -24,7 +24,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     final isOwner = context.select<AppState, bool>((s) => s.isOwner);
 
-    // Define navigation items based on User Role with explicit keys
     final List<Widget> screens = isOwner
         ? const [
             HomeScreen(key: ValueKey('owner-home')),

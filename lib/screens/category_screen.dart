@@ -135,7 +135,6 @@ class CategoryScreen extends StatelessWidget {
   }
 }
 
-// Widget dialog terpisah agar TextEditingController otomatis di-dispose dengan aman
 class _CategoryFormDialog extends StatefulWidget {
   const _CategoryFormDialog({this.category});
 

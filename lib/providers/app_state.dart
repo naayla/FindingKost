@@ -428,7 +428,6 @@ class AppState extends ChangeNotifier {
 
   List<Kost> get items => _kostList;
 
-  // Filter items khusus untuk Pemilik Kost
   List<Kost> get ownerItems {
     if (currentRole == UserRole.pemilikKost) {
       return _kostList
@@ -438,7 +437,6 @@ class AppState extends ChangeNotifier {
     return _kostList;
   }
 
-  // --- MODUL 1: CRUD KOST (DATA UTAMA) ---
   void addKost(Kost kost) {
     _kostList.add(kost);
     notifyListeners();
@@ -467,12 +465,10 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // Compatibility aliases
   void addItem(Kost kost) => addKost(kost);
   void updateItem(String id, Kost newKost) => updateKost(id, newKost);
   void deleteItem(String id) => deleteKost(id);
 
-  // --- MODUL 2: CRUD CATEGORY (DATA REFERENSI) ---
   void addCategory(Category category) {
     _categories.add(category);
     notifyListeners();
@@ -491,7 +487,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- BOOKINGS & REVIEWS & ACTIVITY LOGS ---
   final List<BookingModel> _bookings = [];
   List<BookingModel> get bookings => _bookings;
 
@@ -544,7 +539,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
   final List<MessageModel> _ownerMessages = [];
 
   List<MessageModel> get ownerMessages => _ownerMessages;
@@ -563,7 +557,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  //notifikasi pemilik
   final List<Map<String, dynamic>> _notifications = [];
   List<Map<String, dynamic>> get notifications => _notifications;
 
