@@ -91,7 +91,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // KARTU HEADER PROFIL
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -176,7 +175,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 16),
 
-            // STATISTIK
             Row(
               children: [
                 Expanded(
@@ -270,7 +268,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 24),
 
-            // INFORMASI AKUN
             const Text(
               'Informasi Akun',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),

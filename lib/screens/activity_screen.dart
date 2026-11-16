@@ -92,7 +92,6 @@ class ActivityScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            // Tab 1: Booking Requests
             bookings.isEmpty
                 ? Center(
                     child: Column(
@@ -192,7 +191,6 @@ class ActivityScreen extends StatelessWidget {
                     },
                   ),
 
-            // Tab 2: Activity Logs
             ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: activityLogs.length,

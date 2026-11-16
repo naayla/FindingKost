@@ -198,7 +198,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Unified Clean Card with Role Switcher Tab inside
                           Card(
                             elevation: isDarkMode ? 1 : 4,
                             shadowColor: Colors.black.withValues(alpha: 0.08),
@@ -213,7 +212,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Sleek Tab Switcher inside Card
                                   Container(
                                     height: 46,
                                     padding: const EdgeInsets.all(4),
@@ -313,7 +311,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 20),
 
-                                  // Input Email
                                   Text(
                                     'Email',
                                     style: TextStyle(
@@ -340,7 +337,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 16),
 
-                                  // Input Kata Sandi
                                   Text(
                                     'Kata sandi',
                                     style: TextStyle(
@@ -382,7 +378,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 20),
 
-                                  // Tombol Masuk Dinamis
                                   SizedBox(
                                     width: double.infinity,
                                     height: 50,
@@ -409,7 +404,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   const SizedBox(height: 16),
 
-                                  // Opsi Daftar (Tampil untuk Pencari & Pemilik)
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [

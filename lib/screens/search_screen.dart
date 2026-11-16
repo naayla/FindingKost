@@ -27,10 +27,8 @@ class _SearchScreenState extends State<SearchScreen> {
     final colors = Theme.of(context).colorScheme;
     final appState = context.watch<AppState>();
 
-    // Mengambil daftar kos yang ada di AppState (menggunakan getter items)
     final List<Kost> allKost = appState.items;
 
-    // Filter berdasarkan judul atau lokasi
     final filteredKost = allKost.where((kost) {
       final query = _searchQuery.toLowerCase().trim();
       if (query.isEmpty) return true;

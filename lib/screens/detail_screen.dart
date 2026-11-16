@@ -174,7 +174,6 @@ class DetailScreen extends StatelessWidget {
     bool includeExtraAc = false;
     bool includeLaundry = false;
 
-    // Parse base price
     final numericPrice = int.tryParse(item.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 800000;
 
     showModalBottomSheet(
@@ -422,18 +421,15 @@ class DetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Detail kos'),
         actions: [
-          //tombol chat/hubungi pemilik
           if (!isOwner)
             IconButton(
               tooltip: 'Hubungi pemilik kos',
               icon: const Icon(Icons.chat_bubble_outline_rounded),
               onPressed: () {
-                //notifikasi pesan masuk pemilik
                 appState.addNotification(
                   'Ada pesan baru dari ${currentUser.name} mengenai kos "${item.title}".mau mastikan fasilitas dll',
                   targetOwnerId: item.ownerId,
                 );
-                //navigasi halaman chat
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -445,7 +441,6 @@ class DetailScreen extends StatelessWidget {
                 );
               },
             ),
-          // Tombol Share
           IconButton(
             tooltip: 'Bagikan kos',
             icon: const Icon(Icons.share_outlined),
@@ -453,7 +448,6 @@ class DetailScreen extends StatelessWidget {
               Share.share('Cek kos ${item.title} di ${item.location} - Harga: ${item.price}. Temukan di Finding Kost!');
             },
           ),
-          // Jika Pemilik Kost: Tampilkan tombol Edit & Hapus
           if (isOwner) ...[
             IconButton(
               tooltip: 'Edit informasi kos',
@@ -471,7 +465,6 @@ class DetailScreen extends StatelessWidget {
               onPressed: () => _showDeleteDialog(context),
             ),
           ]
-          // Jika Pencari Kost: Tampilkan tombol Simpan/Favorit
           else ...[
             IconButton(
               tooltip: isFavorite ? 'Hapus dari tersimpan' : 'Simpan ke favorit',
@@ -644,7 +637,6 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          // TOMBOL AJUKAN SEWA / BOOKING & CHAT
           if (!isOwner) ...[
             Row(
               children: [
@@ -691,7 +683,7 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          // ULASAN & RATING SECTION
+          // ULASAN & RATING
           Row(
             children: [
               Text(
