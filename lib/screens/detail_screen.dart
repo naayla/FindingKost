@@ -10,7 +10,6 @@ import '../models/user_role.dart';
 import '../providers/app_state.dart';
 import '../widgets/kost_image.dart';
 import 'form_item_screen.dart';
-import '../screens/chatbot_screen.dart';
 
 class DetailScreen extends StatelessWidget {
   final Kost item;
@@ -73,58 +72,82 @@ class DetailScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   item.title,
-                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700),
                 ),
                 const Divider(height: 24),
-                const Text('Gender / Jenis Kelamin', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Gender / Jenis Kelamin',
+                    style:
+                    TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: seekerGender,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  decoration: const InputDecoration(
+                      contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                   items: ['Pria', 'Wanita']
                       .map((g) => DropdownMenuItem(value: g, child: Text(g)))
                       .toList(),
                   onChanged: (val) => setStateSheet(() => seekerGender = val!),
                 ),
                 const SizedBox(height: 14),
-                const Text('Status Pernikahan', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Status Pernikahan',
+                    style:
+                    TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: seekerMarriageStatus,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  decoration: const InputDecoration(
+                      contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                   items: ['Belum Menikah', 'Pasutri / Menikah']
                       .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                       .toList(),
-                  onChanged: (val) => setStateSheet(() => seekerMarriageStatus = val!),
+                  onChanged: (val) =>
+                      setStateSheet(() => seekerMarriageStatus = val!),
                 ),
                 const SizedBox(height: 14),
-                const Text('Jumlah Penghuni / Orang', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Jumlah Penghuni / Orang',
+                    style:
+                    TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: occupantsCount,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  decoration: const InputDecoration(
+                      contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                   items: ['1 Orang', '2 Orang', '3 Orang']
                       .map((o) => DropdownMenuItem(value: o, child: Text(o)))
                       .toList(),
-                  onChanged: (val) => setStateSheet(() => occupantsCount = val!),
+                  onChanged: (val) =>
+                      setStateSheet(() => occupantsCount = val!),
                 ),
                 const SizedBox(height: 14),
-                const Text('Durasi Sewa', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Durasi Sewa',
+                    style:
+                    TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: duration,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  decoration: const InputDecoration(
+                      contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                   items: ['1 Bulan', '3 Bulan', '6 Bulan', '1 Tahun']
                       .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                       .toList(),
                   onChanged: (val) => setStateSheet(() => duration = val!),
                 ),
                 const SizedBox(height: 14),
-                const Text('Rencana Masuk', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                const Text('Rencana Masuk',
+                    style:
+                    TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: startDate,
-                  decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                  decoration: const InputDecoration(
+                      contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                   items: ['Segera (Bulan ini)', 'Bulan Depan', '2 Bulan Lagi']
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
@@ -155,7 +178,9 @@ class DetailScreen extends StatelessWidget {
                       );
                       Navigator.pop(sheetContext);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Pengajuan sewa beserta data preferensi terkirim ke pemilik!')),
+                        const SnackBar(
+                            content: Text(
+                                'Pengajuan sewa beserta data preferensi terkirim ke pemilik!')),
                       );
                     },
                     child: const Text('Kirim Pengajuan Sewa'),
@@ -174,7 +199,9 @@ class DetailScreen extends StatelessWidget {
     bool includeExtraAc = false;
     bool includeLaundry = false;
 
-    final numericPrice = int.tryParse(item.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 800000;
+// Parse base price
+    final numericPrice =
+        int.tryParse(item.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 800000;
 
     showModalBottomSheet(
       context: context,
@@ -211,7 +238,9 @@ class DetailScreen extends StatelessWidget {
                             if (months > 1) setStateSheet(() => months--);
                           },
                         ),
-                        Text('$months Bulan', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text('$months Bulan',
+                            style:
+                            const TextStyle(fontWeight: FontWeight.bold)),
                         IconButton(
                           icon: const Icon(Icons.add_circle_outline),
                           onPressed: () => setStateSheet(() => months++),
@@ -223,23 +252,30 @@ class DetailScreen extends StatelessWidget {
                 CheckboxListTile(
                   title: const Text('Tambahan Listrik/AC (+Rp 150rb/bln)'),
                   value: includeExtraAc,
-                  onChanged: (val) => setStateSheet(() => includeExtraAc = val!),
+                  onChanged: (val) =>
+                      setStateSheet(() => includeExtraAc = val!),
                   dense: true,
                 ),
                 CheckboxListTile(
                   title: const Text('Paket Laundry (+Rp 100rb/bln)'),
                   value: includeLaundry,
-                  onChanged: (val) => setStateSheet(() => includeLaundry = val!),
+                  onChanged: (val) =>
+                      setStateSheet(() => includeLaundry = val!),
                   dense: true,
                 ),
                 const Divider(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total Estimasi:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Text('Total Estimasi:',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                     Text(
                       'Rp ${total.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(context).colorScheme.primary),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Theme.of(context).colorScheme.primary),
                     ),
                   ],
                 ),
@@ -273,7 +309,8 @@ class DetailScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Rating (Bintang):', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Rating (Bintang):',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -281,7 +318,9 @@ class DetailScreen extends StatelessWidget {
                   final starIndex = index + 1;
                   return IconButton(
                     icon: Icon(
-                      starIndex <= rating ? Icons.star_rounded : Icons.star_border_rounded,
+                      starIndex <= rating
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
                       color: Colors.amber,
                       size: 32,
                     ),
@@ -296,11 +335,13 @@ class DetailScreen extends StatelessWidget {
               Center(
                 child: Text(
                   '${rating.toInt()} / 5 Bintang',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Komentar / Pengalaman:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const Text('Komentar / Pengalaman:',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               const SizedBox(height: 6),
               TextField(
                 controller: commentController,
@@ -357,9 +398,12 @@ class DetailScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kos: ${item.title}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            Text('Kos: ${item.title}',
+                style:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 4),
-            Text('Email Anda: ${user.email}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            Text('Email Anda: ${user.email}',
+                style: const TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 12),
             TextField(
               controller: messageController,
@@ -421,33 +465,16 @@ class DetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Detail kos'),
         actions: [
-          if (!isOwner)
-            IconButton(
-              tooltip: 'Hubungi pemilik kos',
-              icon: const Icon(Icons.chat_bubble_outline_rounded),
-              onPressed: () {
-                appState.addNotification(
-                  'Ada pesan baru dari ${currentUser.name} mengenai kos "${item.title}".mau mastikan fasilitas dll',
-                  targetOwnerId: item.ownerId,
-                );
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChatbotScreen(
-                      initialMessage: 'Halo ${item.ownerName}, saya tertarik dengan "${item.title}" (${item.price}). Apakah saya bisa menjadwalkan survei dan memastikan fasilitas dll yang tersedia?',
-                      ownerName: item.ownerName,
-                    ),
-                  ),
-                );
-              },
-            ),
+// Tombol Share
           IconButton(
             tooltip: 'Bagikan kos',
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
-              Share.share('Cek kos ${item.title} di ${item.location} - Harga: ${item.price}. Temukan di Finding Kost!');
+              Share.share(
+                  'Cek kos ${item.title} di ${item.location} - Harga: ${item.price}. Temukan di Finding Kost!');
             },
           ),
+// Jika Pemilik Kost: Tampilkan tombol Edit & Hapus
           if (isOwner) ...[
             IconButton(
               tooltip: 'Edit informasi kos',
@@ -465,11 +492,14 @@ class DetailScreen extends StatelessWidget {
               onPressed: () => _showDeleteDialog(context),
             ),
           ]
+// Jika Pencari Kost: Tampilkan tombol Simpan/Favorit
           else ...[
             IconButton(
               tooltip: isFavorite ? 'Hapus dari tersimpan' : 'Simpan ke favorit',
               icon: Icon(
-                isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                isFavorite
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
                 color: isFavorite ? colors.primary : null,
               ),
               onPressed: () {
@@ -535,7 +565,8 @@ class DetailScreen extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   color: colors.tertiaryContainer,
                   borderRadius: BorderRadius.circular(12),
@@ -637,6 +668,7 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
+// TOMBOL AJUKAN SEWA / BOOKING & CHAT
           if (!isOwner) ...[
             Row(
               children: [
@@ -647,7 +679,9 @@ class DetailScreen extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () => _showBookingDialog(context),
                       icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-                      label: const Text('Ajukan Sewa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      label: const Text('Ajukan Sewa',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                 ),
@@ -658,8 +692,11 @@ class DetailScreen extends StatelessWidget {
                     height: 50,
                     child: OutlinedButton.icon(
                       onPressed: () => _showChatDialog(context),
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                      label: const Text('Chat Pemilik', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      icon:
+                      const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                      label: const Text('Chat Pemilik',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                 ),
@@ -683,7 +720,7 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          // ULASAN & RATING
+// ULASAN & RATING SECTION
           Row(
             children: [
               Text(
@@ -705,7 +742,8 @@ class DetailScreen extends StatelessWidget {
           if (reviews.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text('Belum ada ulasan untuk kos ini.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+              child: Text('Belum ada ulasan untuk kos ini.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13)),
             )
           else
             for (final review in reviews)
@@ -713,7 +751,8 @@ class DetailScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 10),
                 elevation: 0,
                 color: colors.surfaceContainerLow,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -721,15 +760,22 @@ class DetailScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(review.userName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text(review.userName,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13)),
                           const Spacer(),
-                          const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                          const Icon(Icons.star_rounded,
+                              color: Colors.amber, size: 16),
                           const SizedBox(width: 2),
-                          Text(review.rating.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          Text(review.rating.toString(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 12)),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(review.comment, style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant)),
+                      Text(review.comment,
+                          style: TextStyle(
+                              fontSize: 12, color: colors.onSurfaceVariant)),
                     ],
                   ),
                 ),
