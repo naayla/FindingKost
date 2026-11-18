@@ -16,7 +16,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- USER STATE & ROLE ---
+// --- USER STATE & ROLE ---
   UserModel _currentUser = UserModel(
     id: 'user_seeker_1',
     name: 'Pengguna',
@@ -41,7 +41,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateProfile({String? name, String? email, String? phone, String? institutionOrBusiness}) {
+  void updateProfile({
+    String? name,
+    String? email,
+    String? phone,
+    String? institutionOrBusiness,
+  }) {
     _currentUser = _currentUser.copyWith(
       name: name,
       email: email,
@@ -51,7 +56,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- FAVORITES (UNTUK PENCARI KOST) ---
+// --- FAVORITES (UNTUK PENCARI KOST) ---
   final List<String> _favoriteKostIds = ['1', '4', '9'];
 
   List<String> get favoriteKostIds => _favoriteKostIds;
@@ -71,7 +76,7 @@ class AppState extends ChangeNotifier {
     return _kostList.where((k) => _favoriteKostIds.contains(k.id)).toList();
   }
 
-  // --- CATEGORIES (MINIMAL 5 REFERENSI) ---
+// --- CATEGORIES (MINIMAL 5 REFERENSI) ---
   final List<Category> _categories = [
     Category(id: 'cat_1', name: 'Putri', iconName: 'female'),
     Category(id: 'cat_2', name: 'Putra', iconName: 'male'),
@@ -82,7 +87,7 @@ class AppState extends ChangeNotifier {
 
   List<Category> get categories => _categories;
 
-  // --- KOST LIST (MINIMAL 20 DATA DENGAN KOORDINAT GOOGLE MAPS DI MEDAN) ---
+// --- KOST LIST (20 DATA DI MEDAN) ---
   final List<Kost> _kostList = [
     Kost(
       id: '1',
@@ -100,6 +105,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281234567890',
       description: 'Kos khusus putri aman 24 jam dengan gerbang terunci. Berada sangat dekat dengan pintu masuk USU Medan.',
       isAvailable: true,
+      availableRooms: 4,
     ),
     Kost(
       id: '2',
@@ -117,6 +123,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Lingkungan asri, tenang, sangat cocok untuk mahasiswa yang butuh suasana fokus belajar.',
       isAvailable: true,
+      availableRooms: 2,
     ),
     Kost(
       id: '3',
@@ -134,6 +141,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6285211223344',
       description: 'Kos putra praktis dekat kawasan bisnis dan angkutan umum kota Medan.',
       isAvailable: true,
+      availableRooms: 5,
     ),
     Kost(
       id: '4',
@@ -151,6 +159,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Kos eksklusif bergaya hotel bintang 3 lengkap dengan layanan kebersihan kamar mingguan.',
       isAvailable: true,
+      availableRooms: 2,
     ),
     Kost(
       id: '5',
@@ -168,6 +177,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6282165430099',
       description: 'Akses mudah ke pusat perbelanjaan dan stasiun kereta api Medan.',
       isAvailable: true,
+      availableRooms: 3,
     ),
     Kost(
       id: '6',
@@ -185,6 +195,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Akses gerbang mandiri 24 jam dengan sistem pin digital, cocok untuk pekerja shift.',
       isAvailable: true,
+      availableRooms: 6,
     ),
     Kost(
       id: '7',
@@ -202,6 +213,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281277889900',
       description: 'Dekat dengan Masjid Raya Medan dan Istana Maimun, area tenang dan bersih.',
       isAvailable: true,
+      availableRooms: 1,
     ),
     Kost(
       id: '8',
@@ -219,6 +231,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6285399887766',
       description: 'Sangat hemat untuk mahasiswa Unimed / UINSU dengan tempat tidur nyaman.',
       isAvailable: true,
+      availableRooms: 4,
     ),
     Kost(
       id: '9',
@@ -236,6 +249,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Hunian mewah eksklusif di kawasan privat elit Polonia Medan.',
       isAvailable: true,
+      availableRooms: 2,
     ),
     Kost(
       id: '10',
@@ -253,6 +267,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281233445566',
       description: 'Dekat dengan Merdeka Walk dan Lapangan Merdeka Medan.',
       isAvailable: true,
+      availableRooms: 3,
     ),
     Kost(
       id: '11',
@@ -270,6 +285,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281311223344',
       description: 'Lingkungan sangat hijau, sejuk, ramah mahasiswi.',
       isAvailable: true,
+      availableRooms: 2,
     ),
     Kost(
       id: '12',
@@ -287,6 +303,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Dirancang khusus untuk freelancer dan mahasiswa akhir yang sering mengerjakan tugas hingga larut malam.',
       isAvailable: true,
+      availableRooms: 3,
     ),
     Kost(
       id: '13',
@@ -304,6 +321,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6285233441122',
       description: 'Harga super ramah kantong dengan lokasi strategis Medan Helvetia.',
       isAvailable: true,
+      availableRooms: 7,
     ),
     Kost(
       id: '14',
@@ -321,6 +339,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281122334455',
       description: 'Hunian eksklusif seluas studio apartemen di kompleks perumahan elite Medan Johor.',
       isAvailable: false,
+      availableRooms: 0,
     ),
     Kost(
       id: '15',
@@ -338,6 +357,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Hanya 3 menit jalan kaki menuju fakultas Teknik & Kedokteran USU.',
       isAvailable: true,
+      availableRooms: 2,
     ),
     Kost(
       id: '16',
@@ -355,6 +375,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281377665544',
       description: 'Dekat dengan gerbang Tol Bandar Selamat dan Stasiun Kereta.',
       isAvailable: true,
+      availableRooms: 4,
     ),
     Kost(
       id: '17',
@@ -372,6 +393,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6285200112233',
       description: 'Lingkungan aman dan tenang di kawasan Medan Denai.',
       isAvailable: true,
+      availableRooms: 3,
     ),
     Kost(
       id: '18',
@@ -389,6 +411,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Dekat dengan Medan Fair Plaza dan pusat kuliner malam Medan.',
       isAvailable: true,
+      availableRooms: 1,
     ),
     Kost(
       id: '19',
@@ -406,6 +429,7 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281398765432',
       description: 'Kost super luxury terbaik di Medan Baru dengan pemandangan kota.',
       isAvailable: true,
+      availableRooms: 2,
     ),
     Kost(
       id: '20',
@@ -423,11 +447,13 @@ class AppState extends ChangeNotifier {
       ownerPhone: '+6281299001122',
       description: 'Dekat kantor perbankan dan Istana Maimun, lokasi sangat strategis.',
       isAvailable: true,
+      availableRooms: 5,
     ),
   ];
 
   List<Kost> get items => _kostList;
 
+// Filter items khusus untuk Pemilik Kost
   List<Kost> get ownerItems {
     if (currentRole == UserRole.pemilikKost) {
       return _kostList
@@ -437,6 +463,7 @@ class AppState extends ChangeNotifier {
     return _kostList;
   }
 
+// --- MODUL 1: CRUD KOST (DATA UTAMA) ---
   void addKost(Kost kost) {
     _kostList.add(kost);
     notifyListeners();
@@ -460,15 +487,23 @@ class AppState extends ChangeNotifier {
     final index = _kostList.indexWhere((k) => k.id == id);
     if (index != -1) {
       final current = _kostList[index];
-      _kostList[index] = current.copyWith(isAvailable: !current.isAvailable);
+      final nextStatus = !current.isAvailable;
+      _kostList[index] = current.copyWith(
+        isAvailable: nextStatus,
+        availableRooms: nextStatus
+            ? (current.availableRooms == 0 ? 1 : current.availableRooms)
+            : 0,
+      );
       notifyListeners();
     }
   }
 
+// Compatibility aliases
   void addItem(Kost kost) => addKost(kost);
   void updateItem(String id, Kost newKost) => updateKost(id, newKost);
   void deleteItem(String id) => deleteKost(id);
 
+// --- MODUL 2: CRUD CATEGORY (DATA REFERENSI) ---
   void addCategory(Category category) {
     _categories.add(category);
     notifyListeners();
@@ -487,6 +522,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+// --- BOOKINGS & REVIEWS & ACTIVITY LOGS ---
   final List<BookingModel> _bookings = [];
   List<BookingModel> get bookings => _bookings;
 
@@ -499,19 +535,57 @@ class AppState extends ChangeNotifier {
   void updateBookingStatus(String id, String newStatus) {
     final index = _bookings.indexWhere((b) => b.id == id);
     if (index != -1) {
-      _bookings[index].status = newStatus;
-      _activityLogs.insert(0, 'Status booking ${_bookings[index].kostTitle} diubah menjadi $newStatus');
+      final booking = _bookings[index];
+      booking.status = newStatus;
+
+      if (newStatus == 'Disetujui') {
+        final kostIndex = _kostList.indexWhere((k) => k.id == booking.kostId);
+        if (kostIndex != -1) {
+          final currentKost = _kostList[kostIndex];
+          final remaining = (currentKost.availableRooms - 1).clamp(0, 999);
+          _kostList[kostIndex] = currentKost.copyWith(
+            availableRooms: remaining,
+            isAvailable: remaining > 0,
+          );
+        }
+      }
+
+      _activityLogs.insert(
+        0,
+        'Status booking ${booking.kostTitle} diubah menjadi $newStatus',
+      );
       notifyListeners();
     }
   }
 
   final Map<String, List<ReviewModel>> _reviewsMap = {
     '1': [
-      ReviewModel(id: 'r1', kostId: '1', userName: 'Nayla Syifa', rating: 5.0, comment: 'Kos sangat bersih dan dekat kampus USU!', createdAt: DateTime.now().subtract(const Duration(days: 2))),
-      ReviewModel(id: 'r2', kostId: '1', userName: 'Budi Santoso', rating: 4.5, comment: 'Pemilik ramah dan fasilitas lengkap.', createdAt: DateTime.now().subtract(const Duration(days: 5))),
+      ReviewModel(
+        id: 'r1',
+        kostId: '1',
+        userName: 'Nayla Syifa',
+        rating: 5.0,
+        comment: 'Kos sangat bersih dan dekat kampus USU!',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      ReviewModel(
+        id: 'r2',
+        kostId: '1',
+        userName: 'Budi Santoso',
+        rating: 4.5,
+        comment: 'Pemilik ramah dan fasilitas lengkap.',
+        createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      ),
     ],
     '4': [
-      ReviewModel(id: 'r3', kostId: '4', userName: 'Siti Rahma', rating: 5.0, comment: 'Eksklusif mewah, AC dingin, air panas lancar.', createdAt: DateTime.now().subtract(const Duration(days: 1))),
+      ReviewModel(
+        id: 'r3',
+        kostId: '4',
+        userName: 'Siti Rahma',
+        rating: 5.0,
+        comment: 'Eksklusif mewah, AC dingin, air panas lancar.',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
     ]
   };
 
@@ -539,6 +613,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+// --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
   final List<MessageModel> _ownerMessages = [];
 
   List<MessageModel> get ownerMessages => _ownerMessages;
@@ -557,6 +632,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
+// Notifikasi pemilik
   final List<Map<String, dynamic>> _notifications = [];
   List<Map<String, dynamic>> get notifications => _notifications;
 

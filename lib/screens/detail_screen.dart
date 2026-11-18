@@ -16,12 +16,12 @@ class DetailScreen extends StatelessWidget {
 
   const DetailScreen({super.key, required this.item});
 
-  void _showDeleteDialog(BuildContext context) {
+  void _showDeleteDialog(BuildContext context, Kost currentItem) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Hapus kos ini?'),
-        content: Text('“${item.title}” akan dihapus dari daftar kos.'),
+        content: Text('“${currentItem.title}” akan dihapus dari daftar kos.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -29,7 +29,7 @@ class DetailScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              context.read<AppState>().deleteKost(item.id);
+              context.read<AppState>().deleteKost(currentItem.id);
               Navigator.pop(dialogContext);
               Navigator.pop(context);
             },
@@ -40,7 +40,7 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  void _showBookingDialog(BuildContext context) {
+  void _showBookingDialog(BuildContext context, Kost currentItem) {
     final appState = context.read<AppState>();
     final userName = appState.currentUser.name;
     final userEmail = appState.currentUser.email;
@@ -71,7 +71,7 @@ class DetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  item.title,
+                  currentItem.title,
                   style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w700),
@@ -162,9 +162,9 @@ class DetailScreen extends StatelessWidget {
                       appState.addBooking(
                         BookingModel(
                           id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          kostId: item.id,
-                          kostTitle: item.title,
-                          kostImageUrl: item.imageUrl,
+                          kostId: currentItem.id,
+                          kostTitle: currentItem.title,
+                          kostImageUrl: currentItem.imageUrl,
                           userName: userName,
                           userEmail: userEmail,
                           seekerGender: seekerGender,
@@ -194,14 +194,14 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  void _showCalculatorDialog(BuildContext context) {
+  void _showCalculatorDialog(BuildContext context, Kost currentItem) {
     int months = 3;
     bool includeExtraAc = false;
     bool includeLaundry = false;
 
-// Parse base price
-    final numericPrice =
-        int.tryParse(item.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 800000;
+    final numericPrice = int.tryParse(
+        currentItem.price.replaceAll(RegExp(r'[^0-9]'), '')) ??
+        800000;
 
     showModalBottomSheet(
       context: context,
@@ -295,7 +295,7 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  void _showAddReviewDialog(BuildContext context) {
+  void _showAddReviewDialog(BuildContext context, Kost currentItem) {
     final appState = context.read<AppState>();
     double rating = 5.0;
     final commentController = TextEditingController();
@@ -365,7 +365,7 @@ class DetailScreen extends StatelessWidget {
                 appState.addReview(
                   ReviewModel(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    kostId: item.id,
+                    kostId: currentItem.id,
                     userName: appState.currentUser.name,
                     rating: rating,
                     comment: commentController.text.trim(),
@@ -385,7 +385,7 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  void _showChatDialog(BuildContext context) {
+  void _showChatDialog(BuildContext context, Kost currentItem) {
     final appState = context.read<AppState>();
     final user = appState.currentUser;
     final messageController = TextEditingController();
@@ -393,12 +393,12 @@ class DetailScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Chat Pemilik: ${item.ownerName}'),
+        title: Text('Chat Pemilik: ${currentItem.ownerName}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Kos: ${item.title}',
+            Text('Kos: ${currentItem.title}',
                 style:
                 const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             const SizedBox(height: 4),
@@ -427,8 +427,8 @@ class DetailScreen extends StatelessWidget {
               appState.sendOwnerMessage(
                 MessageModel(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  kostId: item.id,
-                  kostTitle: item.title,
+                  kostId: currentItem.id,
+                  kostTitle: currentItem.title,
                   seekerName: user.name,
                   seekerEmail: user.email,
                   message: messageController.text.trim(),
@@ -452,14 +452,25 @@ class DetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final appState = context.watch<AppState>();
+
+// Ambil data kos terbaru dari AppState agar perubahan jumlah kamar langsung terupdate
+    final currentItem = appState.items.firstWhere(
+          (k) => k.id == item.id,
+      orElse: () => item,
+    );
+
     final currentUser = appState.currentUser;
     final isOwner = currentUser?.role == UserRole.pemilikKost;
-    final isFavorite = appState.favoriteKosts.any((k) => k.id == item.id);
-    final reviews = appState.getReviewsForKost(item.id);
+    final isFavorite = appState.favoriteKosts.any((k) => k.id == currentItem.id);
+    final reviews = appState.getReviewsForKost(currentItem.id);
 
     final categories = appState.categories;
-    final category = categories.where((cat) => cat.id == item.categoryId);
+    final category =
+    categories.where((cat) => cat.id == currentItem.categoryId);
     final categoryName = category.isEmpty ? 'Kos pilihan' : category.first.name;
+
+    final int roomsLeft = currentItem.safeAvailableRooms;
+    final bool hasEmptyRooms = currentItem.isAvailable && roomsLeft > 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -471,7 +482,7 @@ class DetailScreen extends StatelessWidget {
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               Share.share(
-                  'Cek kos ${item.title} di ${item.location} - Harga: ${item.price}. Temukan di Finding Kost!');
+                  'Cek kos ${currentItem.title} di ${currentItem.location} - Harga: ${currentItem.price}. Temukan di Finding Kost!');
             },
           ),
 // Jika Pemilik Kost: Tampilkan tombol Edit & Hapus
@@ -482,14 +493,14 @@ class DetailScreen extends StatelessWidget {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute<void>(
-                  builder: (_) => FormItemScreen(itemToEdit: item),
+                  builder: (_) => FormItemScreen(itemToEdit: currentItem),
                 ),
               ),
             ),
             IconButton(
               tooltip: 'Hapus kos',
               icon: const Icon(Icons.delete_outline_rounded),
-              onPressed: () => _showDeleteDialog(context),
+              onPressed: () => _showDeleteDialog(context, currentItem),
             ),
           ]
 // Jika Pencari Kost: Tampilkan tombol Simpan/Favorit
@@ -503,7 +514,7 @@ class DetailScreen extends StatelessWidget {
                 color: isFavorite ? colors.primary : null,
               ),
               onPressed: () {
-                appState.toggleFavorite(item.id);
+                appState.toggleFavorite(currentItem.id);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -526,7 +537,7 @@ class DetailScreen extends StatelessWidget {
           Stack(
             children: [
               KostImage(
-                imageUrl: item.imageUrl,
+                imageUrl: currentItem.imageUrl,
                 height: 260,
                 borderRadius: 24,
               ),
@@ -550,6 +561,29 @@ class DetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+// Badge Status Ketersediaan Kamar di atas gambar
+              Positioned(
+                right: 14,
+                top: 14,
+                child: Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: hasEmptyRooms
+                        ? const Color(0xFF2D6A4F)
+                        : Colors.red.shade700,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    hasEmptyRooms ? 'Sisa $roomsLeft Kamar' : 'Penuh',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 19),
@@ -557,7 +591,7 @@ class DetailScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  item.title,
+                  currentItem.title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.7,
@@ -580,7 +614,7 @@ class DetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 3),
                     Text(
-                      item.rating.toStringAsFixed(1),
+                      currentItem.rating.toStringAsFixed(1),
                       style: TextStyle(
                         color: colors.onTertiaryContainer,
                         fontWeight: FontWeight.w800,
@@ -602,13 +636,101 @@ class DetailScreen extends StatelessWidget {
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  item.location,
+                  currentItem.location,
                   style: TextStyle(color: colors.onSurfaceVariant),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+// KARTU INFORMASI KETERSEDIAAN & JUMLAH KAMAR KOSONG
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: hasEmptyRooms
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: hasEmptyRooms
+                    ? Colors.green.withValues(alpha: 0.35)
+                    : Colors.red.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: hasEmptyRooms
+                        ? Colors.green.withValues(alpha: 0.18)
+                        : Colors.red.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    hasEmptyRooms
+                        ? Icons.meeting_room_rounded
+                        : Icons.no_meeting_room_rounded,
+                    color: hasEmptyRooms
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasEmptyRooms
+                            ? 'Kamar Tersedia'
+                            : 'Kamar Sudah Penuh',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: hasEmptyRooms
+                              ? Colors.green.shade800
+                              : Colors.red.shade800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        hasEmptyRooms
+                            ? 'Masih ada $roomsLeft kamar kosong yang siap ditempati.'
+                            : 'Saat ini seluruh kamar sudah terisi (0 kamar kosong).',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: hasEmptyRooms
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    hasEmptyRooms ? '$roomsLeft Kosong' : 'Penuh',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -645,7 +767,7 @@ class DetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        item.price,
+                        currentItem.price,
                         style: TextStyle(
                           color: colors.onPrimaryContainer,
                           fontWeight: FontWeight.w800,
@@ -656,7 +778,7 @@ class DetailScreen extends StatelessWidget {
                   ),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => _showCalculatorDialog(context),
+                  onPressed: () => _showCalculatorDialog(context, currentItem),
                   icon: const Icon(Icons.calculate_outlined, size: 16),
                   label: const Text('Kalkulator'),
                   style: OutlinedButton.styleFrom(
@@ -668,7 +790,8 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-// TOMBOL AJUKAN SEWA / BOOKING & CHAT
+
+// TOMBOL AJUKAN SEWA / BOOKING & CHAT PEMILIK
           if (!isOwner) ...[
             Row(
               children: [
@@ -677,11 +800,20 @@ class DetailScreen extends StatelessWidget {
                   child: SizedBox(
                     height: 50,
                     child: FilledButton.icon(
-                      onPressed: () => _showBookingDialog(context),
-                      icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-                      label: const Text('Ajukan Sewa',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 13)),
+                      onPressed: hasEmptyRooms
+                          ? () => _showBookingDialog(context, currentItem)
+                          : null,
+                      icon: Icon(
+                        hasEmptyRooms
+                            ? Icons.bookmark_add_outlined
+                            : Icons.block_rounded,
+                        size: 18,
+                      ),
+                      label: Text(
+                        hasEmptyRooms ? 'Ajukan Sewa' : 'Kamar Penuh',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
                     ),
                   ),
                 ),
@@ -691,9 +823,9 @@ class DetailScreen extends StatelessWidget {
                   child: SizedBox(
                     height: 50,
                     child: OutlinedButton.icon(
-                      onPressed: () => _showChatDialog(context),
-                      icon:
-                      const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                      onPressed: () => _showChatDialog(context, currentItem),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded,
+                          size: 18),
                       label: const Text('Chat Pemilik',
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 13)),
@@ -704,6 +836,7 @@ class DetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 22),
           ],
+
           Text(
             'Tentang tempat ini',
             style: Theme.of(context)
@@ -713,13 +846,43 @@ class DetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            item.description,
+            currentItem.description,
             style: TextStyle(
               color: colors.onSurfaceVariant,
               height: 1.65,
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
+
+// FASILITAS KOS
+          if (currentItem.facilities.isNotEmpty) ...[
+            Text(
+              'Fasilitas tersedia',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: currentItem.facilities
+                  .map(
+                    (facility) => Chip(
+                  avatar: Icon(Icons.check_circle_outline_rounded,
+                      size: 16, color: colors.primary),
+                  label:
+                  Text(facility, style: const TextStyle(fontSize: 12)),
+                  backgroundColor: colors.surfaceContainerLow,
+                  side: BorderSide.none,
+                ),
+              )
+                  .toList(),
+            ),
+            const SizedBox(height: 22),
+          ],
+
 // ULASAN & RATING SECTION
           Row(
             children: [
@@ -732,7 +895,7 @@ class DetailScreen extends StatelessWidget {
               ),
               const Spacer(),
               TextButton.icon(
-                onPressed: () => _showAddReviewDialog(context),
+                onPressed: () => _showAddReviewDialog(context, currentItem),
                 icon: const Icon(Icons.rate_review_outlined, size: 16),
                 label: const Text('Beri Ulasan'),
               ),
