@@ -460,7 +460,7 @@ class DetailScreen extends StatelessWidget {
     );
 
     final currentUser = appState.currentUser;
-    final isOwner = currentUser?.role == UserRole.pemilikKost;
+    final isOwner = currentUser.role == UserRole.pemilikKost;
     final isFavorite = appState.favoriteKosts.any((k) => k.id == currentItem.id);
     final reviews = appState.getReviewsForKost(currentItem.id);
 
@@ -513,14 +513,17 @@ class DetailScreen extends StatelessWidget {
                     : Icons.bookmark_border_rounded,
                 color: isFavorite ? colors.primary : null,
               ),
-              onPressed: () {
-                appState.toggleFavorite(currentItem.id);
+              onPressed: () async {
+                final saved = await appState.toggleFavorite(currentItem.id);
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      isFavorite
-                          ? 'Dihapus dari kos tersimpan'
-                          : 'Disimpan ke kos tersimpan',
+                      saved
+                          ? isFavorite
+                                ? 'Dihapus dari kos tersimpan'
+                                : 'Disimpan ke kos tersimpan'
+                          : 'Perubahan favorit gagal disimpan',
                     ),
                     duration: const Duration(seconds: 2),
                   ),

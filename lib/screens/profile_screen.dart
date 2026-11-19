@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/user_role.dart';
 import '../providers/app_state.dart';
-<<<<<<< HEAD
-import 'settings_screen.dart';
-import '../services/firebase_service.dart';
-=======
 import 'activity_screen.dart';
 import 'main_navigation_screen.dart';
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
+import 'settings_screen.dart';
+import '../services/firebase_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadRegisteredData() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _savedName = prefs.getString('user_name') ?? '';
       _savedEmail = prefs.getString('user_email') ?? '';
@@ -41,10 +40,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-
-
   // Fungsi untuk mengunggah Data Dummy (20 Kos & 5 Kategori) ke Firebase
-  Future<void> _uploadDummyDataToFirebase(BuildContext context) async {
+  Future<void> _uploadDummyDataToFirebase() async {
     setState(() {
       _isUploadingData = true;
     });
@@ -70,7 +67,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$successCount data kos berhasil diunggah ke Firebase!'),
+            content: Text(
+              '$successCount data kos berhasil diunggah ke Firebase!',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -108,23 +107,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colors = Theme.of(context).colorScheme;
     final appState = context.watch<AppState>();
     final currentUser = appState.currentUser;
-    final isOwner = currentUser?.role == UserRole.pemilikKost;
+    final isOwner = currentUser.role == UserRole.pemilikKost;
 
-    final userName = _savedName.isNotEmpty
-        ? _savedName
-        : (currentUser?.name ?? '');
+    final userName = _savedName.isNotEmpty ? _savedName : currentUser.name;
 
-    final userEmail = _savedEmail.isNotEmpty
-        ? _savedEmail
-        : (currentUser?.email ?? '');
+    final userEmail = _savedEmail.isNotEmpty ? _savedEmail : currentUser.email;
 
-    final userPhone = _savedPhone.isNotEmpty
-        ? _savedPhone
-        : (currentUser?.phone ?? '');
+    final userPhone = _savedPhone.isNotEmpty ? _savedPhone : currentUser.phone;
 
     final userCampus = _savedInstitution.isNotEmpty
         ? _savedInstitution
-        : (currentUser?.institutionOrBusiness ?? '');
+        : currentUser.institutionOrBusiness ?? '';
 
     final initials = userName.isNotEmpty ? _getInitials(userName) : '?';
     final displayName = userName.isNotEmpty ? userName : 'Belum Masuk / Tamu';
@@ -180,7 +173,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
@@ -196,31 +192,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       OutlinedButton.icon(
                         onPressed: () {},
-                        icon: const Icon(Icons.edit_outlined, size: 14, color: Colors.white),
-                        label: const Text('Edit Profil', style: TextStyle(color: Colors.white, fontSize: 12)),
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Edit Profil',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.white.withValues(alpha: 0.6)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       ElevatedButton.icon(
                         onPressed: () {
-                          final newRole = isOwner ? UserRole.pencariKost : UserRole.pemilikKost;
+                          final newRole = isOwner
+                              ? UserRole.pencariKost
+                              : UserRole.pemilikKost;
                           appState.setRole(newRole);
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const MainNavigationScreen(),
+                            ),
                           );
                         },
-                        icon: const Icon(Icons.swap_horiz, size: 14, color: Color(0xFF2D5545)),
+                        icon: const Icon(
+                          Icons.swap_horiz,
+                          size: 14,
+                          color: Color(0xFF2D5545),
+                        ),
                         label: Text(
                           isOwner ? 'Mode Pencari' : 'Mode Pemilik',
-                          style: const TextStyle(color: Color(0xFF2D5545), fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Color(0xFF2D5545),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                       ),
                     ],
@@ -246,9 +267,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('3', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text('Kos Tersimpan', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          children: [
+                            Text(
+                              appState.favoriteKostIds.length.toString(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              'Kos Tersimpan',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -269,9 +302,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('5', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text('Kategori Kos', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          children: [
+                            Text(
+                              appState.categories.length.toString(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              'Kategori Kos',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -293,7 +338,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: colors.primaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -305,12 +352,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           children: [
                             Text(
                               'Riwayat Booking & Aktivitas',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                             SizedBox(height: 2),
                             Text(
                               'Lihat status pengajuan sewa dan log aktivitas',
-                              style: TextStyle(fontSize: 11, color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
@@ -335,7 +388,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Email Registered',
               subtitle: userEmail.isEmpty ? '-' : userEmail,
             ),
-<<<<<<< HEAD
             const SizedBox(height: 10),
 
             _buildInfoCard(
@@ -356,18 +408,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // DEV MENU: UPLOAD FIREBASE
             const Text(
               'Developer Menu (Hanya Sementara)',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.amber),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: Colors.amber,
+              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: _isUploadingData ? null : () => _uploadDummyDataToFirebase(context),
+                onPressed: _isUploadingData ? null : _uploadDummyDataToFirebase,
                 icon: _isUploadingData
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Icon(Icons.cloud_upload_rounded),
                 label: Text(
-                  _isUploadingData ? 'Mengunggah ke Firebase...' : 'Upload Data Kos (Dummy) ke Firebase',
+                  _isUploadingData
+                      ? 'Mengunggah ke Firebase...'
+                      : 'Upload Data Kos (Dummy) ke Firebase',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 style: FilledButton.styleFrom(
@@ -409,27 +474,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: BoxDecoration(
                   color: colors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(16),
-=======
-            if (isOwner) ...[
-              if (userPhone.isNotEmpty && userPhone != '-') ...[
-                const SizedBox(height: 10),
-                _buildInfoCard(
-                  icon: Icons.phone_outlined,
-                  title: 'Nomor WhatsApp / Kontak',
-                  subtitle: userPhone,
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
                 ),
-              ],
-            ] else ...[
-              if (userCampus.isNotEmpty && userCampus != '-') ...[
-                const SizedBox(height: 10),
-                _buildInfoCard(
-                  icon: Icons.school_outlined,
-                  title: 'Institusi / Kampus',
-                  subtitle: userCampus,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.settings_outlined,
+                        color: colors.onPrimaryContainer,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pengaturan Aplikasi',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Tampilan mode gelap, notifikasi, dan tentang',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ],
         ),
       ),
