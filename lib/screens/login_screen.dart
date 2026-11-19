@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../models/user_role.dart';
 import '../providers/app_state.dart';
@@ -16,10 +17,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'pengguna@example.com');
-  final _passwordController = TextEditingController(text: '12345678');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   UserRole _selectedRole = UserRole.pencariKost;
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -50,54 +52,99 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _loginAsRole(UserRole role) async {
-    final appState = context.read<AppState>();
-    final prefs = await SharedPreferences.getInstance();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    final savedName = prefs.getString('user_name');
-    final savedEmail = prefs.getString('user_email');
-    final savedPhone = prefs.getString('user_phone');
-    final savedInstitution = prefs.getString('user_institution');
-    final inputEmail = _emailController.text.trim();
-
-    if (role == UserRole.pemilikKost) {
-      appState.setCurrentUser(
-        UserModel(
-          id: 'user_owner_1',
-          name: (savedName != null && savedName.isNotEmpty)
-              ? savedName
-              : 'Pemilik Kos',
-          email: (savedEmail != null && savedEmail.isNotEmpty)
-              ? savedEmail
-              : (inputEmail.isNotEmpty ? inputEmail : 'pemilik@example.com'),
-          phone: savedPhone ?? '',
-          role: UserRole.pemilikKost,
-          institutionOrBusiness: savedInstitution ?? '',
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email dan kata sandi wajib diisi!'),
+          backgroundColor: Colors.red,
         ),
       );
-    } else {
-      appState.setCurrentUser(
-        UserModel(
-          id: 'user_seeker_1',
-          name: (savedName != null && savedName.isNotEmpty)
-              ? savedName
-              : 'Pengguna',
-          email: (savedEmail != null && savedEmail.isNotEmpty)
-              ? savedEmail
-              : (inputEmail.isNotEmpty ? inputEmail : 'pengguna@example.com'),
-          phone: savedPhone ?? '',
-          role: UserRole.pencariKost,
-          institutionOrBusiness: savedInstitution ?? '',
-        ),
-      );
+      return;
     }
 
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute<void>(
-          builder: (_) => const MainNavigationScreen(),
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. Login ke Firebase Authentication
+      final userCredential =
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final firebaseUser = userCredential.user;
+      if (!mounted) return;
+
+      final appState = context.read<AppState>();
+      final prefs = await SharedPreferences.getInstance();
+
+      final savedName = prefs.getString('user_name');
+      final savedPhone = prefs.getString('user_phone');
+      final savedInstitution = prefs.getString('user_institution');
+
+      final name = firebaseUser?.displayName?.isNotEmpty == true
+          ? firebaseUser!.displayName!
+          : (savedName?.isNotEmpty == true
+          ? savedName!
+          : (role == UserRole.pemilikKost ? 'Pemilik Kos' : 'Pengguna'));
+
+      // 2. Simpan sesi user ke AppState
+      appState.setCurrentUser(
+        UserModel(
+          id: firebaseUser?.uid ?? 'user_1',
+          name: name,
+          email: firebaseUser?.email ?? email,
+          phone: firebaseUser?.phoneNumber ?? savedPhone ?? '',
+          role: role,
+          institutionOrBusiness: savedInstitution ?? '',
         ),
       );
+
+      // 3. Pindah ke halaman utama
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => const MainNavigationScreen(),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Terjadi kesalahan saat masuk.';
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+        errorMessage = 'Email atau kata sandi salah, atau akun belum terdaftar.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Kata sandi salah.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'Format email tidak valid.';
+      } else {
+        errorMessage = e.message ?? errorMessage;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -106,8 +153,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final colors = Theme.of(context).colorScheme;
     final isDarkMode = context.watch<AppState>().isDarkMode;
 
-    final headerTextColor = isDarkMode ? Colors.white : const Color(0xFF1E293B);
-    final subtextColor = isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+    final headerTextColor =
+    isDarkMode ? Colors.white : const Color(0xFF1E293B);
+    final subtextColor =
+    isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
 
     final isSeeker = _selectedRole == UserRole.pencariKost;
 
@@ -116,22 +165,22 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: BoxDecoration(
           gradient: isDarkMode
               ? LinearGradient(
-                  colors: [
-                    colors.surface,
-                    colors.surfaceContainer,
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
+            colors: [
+              colors.surface,
+              colors.surfaceContainer,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          )
               : const LinearGradient(
-                  colors: [
-                    Color(0xFFE2EBE4),
-                    Color(0xFFF7F0E6),
-                    Color(0xFFFAF8F5),
-                  ],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
+            colors: [
+              Color(0xFFE2EBE4),
+              Color(0xFFF7F0E6),
+              Color(0xFFFAF8F5),
+            ],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
         ),
         child: SafeArea(
           child: Column(
@@ -171,15 +220,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            isSeeker ? 'Selamat Datang Finder' : 'Portal Pemilik Kos',
+                            isSeeker
+                                ? 'Selamat Datang Finder'
+                                : 'Portal Pemilik Kos',
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineMedium
                                 ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: headerTextColor,
-                                  letterSpacing: -0.5,
-                                ),
+                              fontWeight: FontWeight.bold,
+                              color: headerTextColor,
+                              letterSpacing: -0.5,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           SizedBox(
@@ -197,7 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
-
                           Card(
                             elevation: isDarkMode ? 1 : 4,
                             shadowColor: Colors.black.withValues(alpha: 0.08),
@@ -225,8 +275,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Expanded(
                                           child: GestureDetector(
                                             onTap: () => setState(() =>
-                                                _selectedRole =
-                                                    UserRole.pencariKost),
+                                            _selectedRole =
+                                                UserRole.pencariKost),
                                             child: Container(
                                               alignment: Alignment.center,
                                               decoration: BoxDecoration(
@@ -234,11 +284,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     ? colors.primary
                                                     : Colors.transparent,
                                                 borderRadius:
-                                                    BorderRadius.circular(19),
+                                                BorderRadius.circular(19),
                                               ),
                                               child: Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                                 children: [
                                                   Icon(
                                                     Icons.search_rounded,
@@ -253,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     style: TextStyle(
                                                       fontSize: 12,
                                                       fontWeight:
-                                                          FontWeight.w700,
+                                                      FontWeight.w700,
                                                       color: isSeeker
                                                           ? colors.onPrimary
                                                           : colors.onSurface,
@@ -267,8 +317,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         Expanded(
                                           child: GestureDetector(
                                             onTap: () => setState(() =>
-                                                _selectedRole =
-                                                    UserRole.pemilikKost),
+                                            _selectedRole =
+                                                UserRole.pemilikKost),
                                             child: Container(
                                               alignment: Alignment.center,
                                               decoration: BoxDecoration(
@@ -276,11 +326,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     ? colors.primary
                                                     : Colors.transparent,
                                                 borderRadius:
-                                                    BorderRadius.circular(19),
+                                                BorderRadius.circular(19),
                                               ),
                                               child: Row(
                                                 mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                MainAxisAlignment.center,
                                                 children: [
                                                   Icon(
                                                     Icons.storefront_rounded,
@@ -295,7 +345,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                     style: TextStyle(
                                                       fontSize: 12,
                                                       fontWeight:
-                                                          FontWeight.w700,
+                                                      FontWeight.w700,
                                                       color: !isSeeker
                                                           ? colors.onPrimary
                                                           : colors.onSurface,
@@ -310,7 +360,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-
                                   Text(
                                     'Email',
                                     style: TextStyle(
@@ -336,7 +385,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-
                                   Text(
                                     'Kata sandi',
                                     style: TextStyle(
@@ -352,7 +400,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: const TextStyle(fontSize: 14),
                                     decoration: InputDecoration(
                                       contentPadding:
-                                          const EdgeInsets.symmetric(
+                                      const EdgeInsets.symmetric(
                                         vertical: 14,
                                         horizontal: 16,
                                       ),
@@ -369,7 +417,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         onPressed: () {
                                           setState(() {
                                             _obscurePassword =
-                                                !_obscurePassword;
+                                            !_obscurePassword;
                                           });
                                         },
                                       ),
@@ -377,21 +425,29 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 20),
-
                                   SizedBox(
                                     width: double.infinity,
                                     height: 50,
                                     child: FilledButton(
-                                      onPressed: () {
-                                        _loginAsRole(_selectedRole);
-                                      },
+                                      onPressed: _isLoading
+                                          ? null
+                                          : () => _loginAsRole(_selectedRole),
                                       style: FilledButton.styleFrom(
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
-                                              BorderRadius.circular(25),
+                                          BorderRadius.circular(25),
                                         ),
                                       ),
-                                      child: Text(
+                                      child: _isLoading
+                                          ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                          : Text(
                                         isSeeker
                                             ? 'Masuk sebagai Pencari Kost'
                                             : 'Masuk sebagai Pemilik Kost',
@@ -403,7 +459,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -420,7 +475,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             context,
                                             MaterialPageRoute<void>(
                                               builder: (_) =>
-                                                  const RegisterScreen(),
+                                              const RegisterScreen(),
                                             ),
                                           ).then((_) {
                                             _loadSavedAccount();

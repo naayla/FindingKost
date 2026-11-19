@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/booking_model.dart';
 import '../models/category.dart';
 import '../models/kost_model.dart';
@@ -8,264 +6,121 @@ import '../models/message_model.dart';
 import '../models/review_model.dart';
 import '../models/user_model.dart';
 import '../models/user_role.dart';
-import '../services/firebase_service.dart';
 
 class AppState extends ChangeNotifier {
+  // --- 1. DARK MODE STATE ---
   bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;
-
-  final FirebaseService _firebaseService;
-
   void toggleDarkMode() {
     _isDarkMode = !_isDarkMode;
     notifyListeners();
   }
 
-  // --- USER STATE & ROLE ---
-  UserModel _currentUser = UserModel(
-    id: 'user_seeker_1',
-    name: 'Pengguna',
-    email: 'pengguna@example.com',
-    phone: '+62 812 3456 7890',
-    role: UserRole.pencariKost,
-    institutionOrBusiness: 'Universitas Sumatera Utara',
-  );
+  // --- 2. MANAJEMEN USER & ROLE ---
+  UserModel? _currentUser;
+  UserModel? get currentUser => _currentUser;
+  bool get isOwner => _currentUser?.role == UserRole.pemilikKost;
 
-  UserModel get currentUser => _currentUser;
-  UserRole get currentRole => _currentUser.role;
-  bool get isOwner => _currentUser.role == UserRole.pemilikKost;
-  bool get isSeeker => _currentUser.role == UserRole.pencariKost;
-
-  void setCurrentUser(UserModel user) {
+  void setCurrentUser(UserModel? user) {
     _currentUser = user;
-    _favoriteKostIds.clear();
-    _favoriteLoad = _loadFavoriteKostIds(user.id);
     notifyListeners();
   }
 
   void setRole(UserRole role) {
-    _currentUser = _currentUser.copyWith(role: role);
-    notifyListeners();
-  }
-
-  void updateProfile({
-    String? name,
-    String? email,
-    String? phone,
-    String? institutionOrBusiness,
-  }) {
-    _currentUser = _currentUser.copyWith(
-      name: name,
-      email: email,
-      phone: phone,
-      institutionOrBusiness: institutionOrBusiness,
-    );
-    notifyListeners();
-  }
-
-  // --- FAVORITES (UNTUK PENCARI KOST) ---
-  static const _favoriteStorageKeyPrefix = 'favorite_kost_ids_';
-  final List<String> _favoriteKostIds = [];
-  Future<void> _favoriteLoad = Future<void>.value();
-
-  List<String> get favoriteKostIds => List.unmodifiable(_favoriteKostIds);
-
-  bool isFavorite(String id) => _favoriteKostIds.contains(id);
-
-  Future<bool> toggleFavorite(String id) async {
-    await _favoriteLoad;
-    final previousFavorites = List<String>.of(_favoriteKostIds);
-    if (_favoriteKostIds.contains(id)) {
-      _favoriteKostIds.remove(id);
+    if (_currentUser != null) {
+      _currentUser = _currentUser!.copyWith(role: role);
     } else {
-      _favoriteKostIds.add(id);
-    }
-    notifyListeners();
-
-    try {
-      final preferences = await SharedPreferences.getInstance();
-      final saved = await preferences.setStringList(
-        _favoriteStorageKey(_currentUser.id),
-        _favoriteKostIds,
+      _currentUser = UserModel(
+        id: role == UserRole.pemilikKost ? 'user_owner_1' : 'user_seeker_1',
+        name: role == UserRole.pemilikKost ? 'Pemilik Kos' : 'Pengguna',
+        email: role == UserRole.pemilikKost ? 'pemilik@example.com' : 'pengguna@example.com',
+        phone: '',
+        role: role,
       );
-      if (saved) return true;
-    } catch (error, stackTrace) {
-      _favoriteKostIds
-        ..clear()
-        ..addAll(previousFavorites);
-      notifyListeners();
-      Error.throwWithStackTrace(error, stackTrace);
     }
-
-    _favoriteKostIds
-      ..clear()
-      ..addAll(previousFavorites);
     notifyListeners();
-    return false;
   }
 
-  List<Kost> get favoriteKosts {
-    return _kostList.where((k) => _favoriteKostIds.contains(k.id)).toList();
+  // --- 3. FAVORIT KOS ---
+  final List<String> _favoriteKostIds = ['1', '3'];
+  List<String> get favoriteKostIds => _favoriteKostIds;
+  List<Kost> get favoriteKosts => _kostList.where((k) => _favoriteKostIds.contains(k.id)).toList();
+
+  bool isFavorite(Kost kost) {
+    return _favoriteKostIds.contains(kost.id);
   }
 
-  // --- CATEGORIES ---
-  List<Category> _categories = [
+  void toggleFavorite(Kost kost) {
+    if (_favoriteKostIds.contains(kost.id)) {
+      _favoriteKostIds.remove(kost.id);
+      _activityLogs.insert(0, 'Menghapus ${kost.title} dari favorit');
+    } else {
+      _favoriteKostIds.add(kost.id);
+      _activityLogs.insert(0, 'Menambahkan ${kost.title} ke favorit');
+    }
+    notifyListeners();
+  }
+
+  // --- 4. BOOKINGS & INBOX ---
+  final List<BookingModel> _bookings = [];
+  List<BookingModel> get bookings => _bookings;
+
+  void addBooking(BookingModel booking) {
+    _bookings.insert(0, booking);
+    _activityLogs.insert(0, 'Mengajukan sewa untuk ${booking.kostTitle}');
+    notifyListeners();
+  }
+
+  void updateBookingStatus(String bookingId, String newStatus) {
+    final index = _bookings.indexWhere((b) => b.id == bookingId);
+    if (index != -1) {
+      _bookings[index] = _bookings[index].copyWith(status: newStatus);
+      _activityLogs.insert(0, 'Status pengajuan diperbarui menjadi $newStatus');
+      notifyListeners();
+    }
+  }
+
+  final List<MessageModel> _ownerMessages = [];
+  List<MessageModel> get ownerMessages => _ownerMessages;
+
+  void sendOwnerMessage(MessageModel message) {
+    _ownerMessages.insert(0, message);
+    notifyListeners();
+  }
+
+  void markMessageAsRead(String messageId) {
+    final index = _ownerMessages.indexWhere((m) => m.id == messageId);
+    if (index != -1) {
+      _ownerMessages[index].isRead = true;
+      notifyListeners();
+    }
+  }
+
+  final List<String> _activityLogs = [];
+  List<String> get activityLogs => _activityLogs;
+
+  // --- 5. REVIEWS ---
+  final List<ReviewModel> _reviews = [];
+  List<ReviewModel> getReviewsForKost(String kostId) {
+    return _reviews.where((r) => r.kostId == kostId).toList();
+  }
+
+  void addReview(ReviewModel review) {
+    _reviews.insert(0, review);
+    _activityLogs.insert(0, 'Menambahkan ulasan baru');
+    notifyListeners();
+  }
+
+  // --- 6. KATEGORI & KOS ---
+  final List<Category> _categories = [
     Category(id: 'cat_1', name: 'Putri', iconName: 'female'),
     Category(id: 'cat_2', name: 'Putra', iconName: 'male'),
     Category(id: 'cat_3', name: 'Campur', iconName: 'people'),
     Category(id: 'cat_4', name: 'Eksklusif', iconName: 'star'),
     Category(id: 'cat_5', name: 'Bebas 24 Jam', iconName: 'access_time'),
   ];
-
   List<Category> get categories => _categories;
 
-  // --- KOST LIST (Sekarang akan diambil dari Firebase) ---
-  List<Kost> _kostList = [];
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
-
-  List<Kost> get items => _kostList;
-
-  // Constructor
-  AppState({FirebaseService? firebaseService})
-    : _firebaseService = firebaseService ?? FirebaseService() {
-    _favoriteLoad = _loadFavoriteKostIds(_currentUser.id);
-    _loadDataFromFirebase();
-  }
-
-  String _favoriteStorageKey(String userId) =>
-      '$_favoriteStorageKeyPrefix$userId';
-
-  Future<void> _loadFavoriteKostIds(String userId) async {
-    final preferences = await SharedPreferences.getInstance();
-    final savedIds = preferences.getStringList(_favoriteStorageKey(userId));
-    if (_currentUser.id != userId) return;
-
-    _favoriteKostIds
-      ..clear()
-      ..addAll(savedIds ?? (userId == 'user_seeker_1' ? ['1', '4', '9'] : []));
-
-    if (savedIds == null && userId == 'user_seeker_1') {
-      final saved = await preferences.setStringList(
-        _favoriteStorageKey(userId),
-        _favoriteKostIds,
-      );
-      if (!saved) {
-        throw StateError('Favorit awal gagal disimpan ke penyimpanan lokal.');
-      }
-    }
-    notifyListeners();
-  }
-
-  // ---------------------------------------------------------------------------
-  // INTEGRASI FIREBASE (MEMBACA DATA)
-  // ---------------------------------------------------------------------------
-  Future<void> _loadDataFromFirebase() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      // 1. Mengambil data Kos dari Firestore
-      final firestoreKosts = await _firebaseService.getAllKosts();
-
-      // Jika di Firestore ada data, gunakan data tersebut
-      if (firestoreKosts.isNotEmpty) {
-        _kostList = firestoreKosts;
-      } else {
-        // Fallback ke data kosong jika belum ada di database
-        _kostList = [];
-      }
-
-      // (Opsional) 2. Mengambil Kategori dari Firestore
-      // Jika belum diupload, kita akan tetap pakai _categories hardcoded di atas.
-      // final firestoreCategories = await _firebaseService.getCategories();
-      // if (firestoreCategories.isNotEmpty) {
-      //   _categories = firestoreCategories;
-      // }
-    } catch (e) {
-      print("Gagal memuat data dari Firebase: $e");
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Untuk memanggil reload data secara manual
-  Future<void> reloadData() async {
-    await _loadDataFromFirebase();
-  }
-
-  // Filter items khusus untuk Pemilik Kost
-  List<Kost> get ownerItems {
-    if (currentRole == UserRole.pemilikKost) {
-      return _kostList
-          .where(
-            (k) => k.ownerId == _currentUser.id || k.ownerId == 'user_owner_1',
-          )
-          .toList();
-    }
-    return _kostList;
-  }
-
-  // --- MODUL 1: CRUD KOST (Telah Terhubung ke Firebase) ---
-  Future<void> addKost(Kost kost) async {
-    final resultId = await _firebaseService.addKost(kost);
-    if (resultId != null) {
-      final newKost = kost.copyWith(id: resultId);
-      _kostList.add(newKost);
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateKost(String id, Kost newKost) async {
-    final success = await _firebaseService.updateKost(newKost);
-    if (success) {
-      final index = _kostList.indexWhere((k) => k.id == id);
-      if (index != -1) {
-        _kostList[index] = newKost;
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<void> deleteKost(String id) async {
-    final success = await _firebaseService.deleteKost(id);
-    if (success) {
-      _kostList.removeWhere((k) => k.id == id);
-      if (_favoriteKostIds.remove(id)) {
-        final preferences = await SharedPreferences.getInstance();
-        final saved = await preferences.setStringList(
-          _favoriteStorageKey(_currentUser.id),
-          _favoriteKostIds,
-        );
-        if (!saved) {
-          throw StateError('Perubahan favorit gagal disimpan.');
-        }
-      }
-      notifyListeners();
-    }
-  }
-
-  Future<void> toggleKostAvailability(String id) async {
-    final index = _kostList.indexWhere((k) => k.id == id);
-    if (index != -1) {
-      final current = _kostList[index];
-      final updatedKost = current.copyWith(isAvailable: !current.isAvailable);
-
-      final success = await _firebaseService.updateKost(updatedKost);
-      if (success) {
-        _kostList[index] = updatedKost;
-        notifyListeners();
-      }
-    }
-  }
-
-  // Compatibility aliases
-  void addItem(Kost kost) => addKost(kost);
-  void updateItem(String id, Kost newKost) => updateKost(id, newKost);
-  void deleteItem(String id) => deleteKost(id);
-
-  // --- MODUL 2: CRUD CATEGORY (Sementara tetap lokal) ---
   void addCategory(Category category) {
     _categories.add(category);
     notifyListeners();
@@ -284,130 +139,119 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- BOOKINGS & REVIEWS & ACTIVITY LOGS ---
-  final List<BookingModel> _bookings = [];
-  List<BookingModel> get bookings => _bookings;
-
-  void addBooking(BookingModel booking) {
-    _bookings.insert(0, booking);
-    _activityLogs.insert(0, 'Mengajukan sewa untuk ${booking.kostTitle}');
-    notifyListeners();
-  }
-
-  void updateBookingStatus(String id, String newStatus) {
-    final index = _bookings.indexWhere((b) => b.id == id);
-    if (index != -1) {
-      final booking = _bookings[index];
-      booking.status = newStatus;
-
-      if (newStatus == 'Disetujui') {
-        final kostIndex = _kostList.indexWhere((k) => k.id == booking.kostId);
-        if (kostIndex != -1) {
-          final currentKost = _kostList[kostIndex];
-          final remaining = (currentKost.availableRooms - 1).clamp(0, 999);
-          _kostList[kostIndex] = currentKost.copyWith(
-            availableRooms: remaining,
-            isAvailable: remaining > 0,
-          );
-        }
-      }
-
-      _activityLogs.insert(
-        0,
-        'Status booking ${booking.kostTitle} diubah menjadi $newStatus',
-      );
-      notifyListeners();
-    }
-  }
-
-  final Map<String, List<ReviewModel>> _reviewsMap = {
-    '1': [
-      ReviewModel(
-        id: 'r1',
-        kostId: '1',
-        userName: 'Nayla Syifa',
-        rating: 5.0,
-        comment: 'Kos sangat bersih dan dekat kampus USU!',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-      ReviewModel(
-        id: 'r2',
-        kostId: '1',
-        userName: 'Budi Santoso',
-        rating: 4.5,
-        comment: 'Pemilik ramah dan fasilitas lengkap.',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-    ],
-    '4': [
-      ReviewModel(
-        id: 'r3',
-        kostId: '4',
-        userName: 'Siti Rahma',
-        rating: 5.0,
-        comment: 'Eksklusif mewah, AC dingin, air panas lancar.',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-    ],
-  };
-
-  List<ReviewModel> getReviewsForKost(String kostId) {
-    return _reviewsMap[kostId] ?? [];
-  }
-
-  void addReview(ReviewModel review) {
-    if (_reviewsMap[review.kostId] == null) {
-      _reviewsMap[review.kostId] = [];
-    }
-    _reviewsMap[review.kostId]!.insert(0, review);
-    _activityLogs.insert(0, 'Menambahkan ulasan untuk kos');
-    notifyListeners();
-  }
-
-  final List<String> _activityLogs = [
-    'Masuk ke aplikasi Finding Kost',
-    'Menjelajahi katalog kos di Medan',
+  final List<Kost> _kostList = [
+    Kost(
+      id: '1',
+      categoryId: 'cat_1',
+      title: 'Kos Bahagia Medan Baru',
+      location: 'Jl. Dr. Mansyur, Kec. Medan Baru',
+      price: 'Rp 850.000 / bulan',
+      rating: 4.8,
+      imageUrl: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=600',
+      description: 'Kos khusus putri aman 24 jam dengan gerbang terunci. Berada sangat dekat dengan pintu masuk USU Medan.',
+      ownerName: 'Ibu Hj. Siti Aminah',
+      ownerPhone: '+62 812 3456 7890',
+      availableRooms: 3,
+      genderRule: 'Putri',
+      marriageStatus: 'Pasutri Diizinkan',
+      maxOccupants: '2 Orang',
+      latitude: 3.5651,
+      longitude: 98.6538,
+    ),
+    Kost(
+      id: '2',
+      categoryId: 'cat_1',
+      title: 'Kost Putri Harmoni',
+      location: 'Kec. Medan Selayang',
+      price: 'Rp 750.000 / bulan',
+      rating: 4.7,
+      imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600',
+      description: 'Kos putri nyaman dekat area kampus.',
+      ownerName: 'Bapak Budi',
+      ownerPhone: '+62 812 9876 5432',
+      availableRooms: 2,
+      genderRule: 'Putri',
+      marriageStatus: 'Belum Menikah',
+      maxOccupants: '1 Orang',
+      latitude: 3.5500,
+      longitude: 98.6400,
+    ),
+    Kost(
+      id: '3',
+      categoryId: 'cat_2',
+      title: 'Kost Mahasiswa Medan',
+      location: 'Kec. Medan Petisah',
+      price: 'Rp 700.000 / bulan',
+      rating: 4.6,
+      imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=600',
+      description: 'Kos putra strategis pusat kota.',
+      ownerName: 'Bapak Joko',
+      ownerPhone: '+62 811 2222 3333',
+      availableRooms: 4,
+      genderRule: 'Putra',
+      marriageStatus: 'Belum Menikah',
+      maxOccupants: '1 Orang',
+      latitude: 3.5800,
+      longitude: 98.6700,
+    ),
+    Kost(
+      id: '4',
+      categoryId: 'cat_4',
+      title: 'Grand Residence Executive',
+      location: 'Kec. Medan Baru',
+      price: 'Rp 1.800.000 / bulan',
+      rating: 4.9,
+      imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=600',
+      description: 'Kos eksklusif fasilitas lengkap.',
+      ownerName: 'Ibu Rina',
+      ownerPhone: '+62 813 4444 5555',
+      availableRooms: 1,
+      genderRule: 'Campur / Bebas',
+      marriageStatus: 'Pasutri Diizinkan',
+      maxOccupants: '2 Orang',
+      latitude: 3.5600,
+      longitude: 98.6600,
+    ),
+    Kost(
+      id: '5',
+      categoryId: 'cat_3',
+      title: 'Kost Melati Campur',
+      location: 'Kec. Medan Tembung',
+      price: 'Rp 650.000 / bulan',
+      rating: 4.4,
+      imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=600',
+      description: 'Kos campur ekonomis.',
+      ownerName: 'Bapak Santoso',
+      ownerPhone: '+62 815 6666 7777',
+      availableRooms: 5,
+      genderRule: 'Campur / Bebas',
+      marriageStatus: 'Belum Menikah',
+      maxOccupants: '1 Orang',
+      latitude: 3.6000,
+      longitude: 98.7000,
+    ),
   ];
-  List<String> get activityLogs => _activityLogs;
+  List<Kost> get items => _kostList;
 
-  void logActivity(String message) {
-    _activityLogs.insert(0, message);
+  void addKost(Kost kost) {
+    final newKost = kost.copyWith(id: DateTime.now().millisecondsSinceEpoch.toString());
+    _kostList.insert(0, newKost);
+    _activityLogs.insert(0, 'Menambahkan kos baru: ${newKost.title}');
     notifyListeners();
   }
 
-  // --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
-  final List<MessageModel> _ownerMessages = [];
-
-  List<MessageModel> get ownerMessages => _ownerMessages;
-
-  void sendOwnerMessage(MessageModel msg) {
-    _ownerMessages.insert(0, msg);
-    _activityLogs.insert(
-      0,
-      'Mengirim pesan chat ke pemilik kos ${msg.kostTitle}',
-    );
-    notifyListeners();
-  }
-
-  void markMessageAsRead(String id) {
-    final index = _ownerMessages.indexWhere((m) => m.id == id);
+  void updateKost(String id, Kost updatedKost) {
+    final index = _kostList.indexWhere((k) => k.id == id);
     if (index != -1) {
-      _ownerMessages[index].isRead = true;
+      _kostList[index] = updatedKost;
+      _activityLogs.insert(0, 'Memperbarui kos: ${updatedKost.title}');
       notifyListeners();
     }
   }
 
-  // Notifikasi pemilik
-  final List<Map<String, dynamic>> _notifications = [];
-  List<Map<String, dynamic>> get notifications => _notifications;
-
-  void addNotification(String message, {required String targetOwnerId}) {
-    _notifications.insert(0, {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'message': message,
-      'targetOwnerId': targetOwnerId,
-      'createdAt': DateTime.now(),
-    });
+  void deleteKost(String id) {
+    _kostList.removeWhere((k) => k.id == id);
+    _activityLogs.insert(0, 'Menghapus kos ID: $id');
     notifyListeners();
   }
 }

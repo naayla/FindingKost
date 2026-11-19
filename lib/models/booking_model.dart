@@ -28,4 +28,36 @@ class BookingModel {
     required this.status,
     required this.createdAt,
   });
+
+  BookingModel copyWith({
+    String? id,
+    String? kostId,
+    String? kostTitle,
+    String? kostImageUrl,
+    String? userName,
+    String? userEmail,
+    String? seekerGender,
+    String? seekerMarriageStatus,
+    String? occupantsCount,
+    String? durationMonths,
+    String? startDate,
+    String? status,
+    DateTime? createdAt,
+  }) {
+    return BookingModel(
+      id: id ?? this.id,
+      kostId: kostId ?? this.kostId,
+      kostTitle: kostTitle ?? this.kostTitle,
+      kostImageUrl: kostImageUrl ?? this.kostImageUrl,
+      userName: userName ?? this.userName,
+      userEmail: userEmail ?? this.userEmail,
+      seekerGender: seekerGender ?? this.seekerGender,
+      seekerMarriageStatus: seekerMarriageStatus ?? this.seekerMarriageStatus,
+      occupantsCount: occupantsCount ?? this.occupantsCount,
+      durationMonths: durationMonths ?? this.durationMonths,
+      startDate: startDate ?? this.startDate,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

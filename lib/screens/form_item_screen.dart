@@ -139,7 +139,7 @@ class _FormItemScreenState extends State<FormItemScreen> {
       latitude: double.tryParse(_latController.text) ?? 3.5651,
       longitude: double.tryParse(_lngController.text) ?? 98.6538,
       facilities: _selectedFacilities,
-      ownerId: appState.currentUser.id,
+      ownerId: appState.currentUser?.id ?? 'user_owner_1',
       ownerName: _ownerNameController.text.trim(),
       ownerPhone: _ownerPhoneController.text.trim(),
       description: _descriptionController.text.trim(),
