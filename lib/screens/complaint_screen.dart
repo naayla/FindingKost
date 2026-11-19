@@ -41,7 +41,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     final colors = Theme.of(context).colorScheme;
     final isOwner = context.watch<AppState>().isOwner;
 
-    // Daftar opsi untuk Pemilik vs Pencari Kos
     final categoriesList = isOwner
         ? const [
       DropdownMenuItem(
@@ -110,7 +109,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 DropdownButtonFormField<String>(
-                  // Menggunakan value dan bukannya initialValue agar selalu reaktif terhadap perubahan role
                   value: _category,
                   decoration: const InputDecoration(
                     labelText: 'Kategori Laporan',

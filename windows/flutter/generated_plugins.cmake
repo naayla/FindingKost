@@ -3,7 +3,12 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+<<<<<<< HEAD
+  cloud_firestore
+  firebase_core
+=======
   share_plus
+>>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
   url_launcher_windows
 )
 

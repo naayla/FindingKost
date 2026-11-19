@@ -10,7 +10,7 @@ class BookingModel {
   final String occupantsCount;
   final String durationMonths;
   final String startDate;
-  String status; // 'Menunggu Konfirmasi', 'Disetujui', 'Ditolak'
+  String status;
   final DateTime createdAt;
 
   BookingModel({
