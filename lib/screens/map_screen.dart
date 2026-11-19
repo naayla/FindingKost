@@ -67,7 +67,6 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          // OpenStreetMap view (No API Key required, 100% Free)
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -123,7 +122,6 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
 
-          // Top Floating Category Filter Bar
           Positioned(
             top: 12,
             left: 12,
@@ -179,7 +177,6 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // Top Info Indicator
           Positioned(
             top: 64,
             left: 16,
@@ -213,7 +210,6 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // Bottom Floating Selected Item Preview Card
           if (_selectedKost != null)
             Positioned(
               left: 16,

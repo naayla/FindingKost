@@ -8,48 +8,14 @@ class CategoryScreen extends StatelessWidget {
   const CategoryScreen({super.key});
 
   Future<void> _showCategoryDialog(
-    BuildContext context, [
-    Category? category,
-  ]) async {
-    final formKey = GlobalKey<FormState>();
-    final controller = TextEditingController(text: category?.name ?? '');
+      BuildContext context, [
+        Category? category,
+      ]) async {
     final result = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(category == null ? 'Tambah kategori' : 'Edit kategori'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Nama kategori',
-              hintText: 'Contoh: Kos dekat kampus',
-              prefixIcon: Icon(Icons.category_outlined),
-            ),
-            validator: (value) => value == null || value.trim().isEmpty
-                ? 'Nama kategori wajib diisi.'
-                : null,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(dialogContext, controller.text.trim());
-              }
-            },
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
+      builder: (dialogContext) => _CategoryFormDialog(category: category),
     );
-    controller.dispose();
+
     if (result == null || !context.mounted) return;
 
     final appState = context.read<AppState>();
@@ -70,10 +36,10 @@ class CategoryScreen extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(
-    BuildContext context,
-    Category category,
-    int itemCount,
-  ) async {
+      BuildContext context,
+      Category category,
+      int itemCount,
+      ) async {
     if (itemCount > 0) {
       await showDialog<void>(
         context: context,
@@ -81,7 +47,7 @@ class CategoryScreen extends StatelessWidget {
           title: const Text('Kategori masih digunakan'),
           content: Text(
             'Pindahkan $itemCount kos dari kategori "${category.name}" '
-            'sebelum menghapusnya.',
+                'sebelum menghapusnya.',
           ),
           actions: [
             FilledButton(
@@ -135,9 +101,9 @@ class CategoryScreen extends StatelessWidget {
           Text(
             'Atur sesuai kebutuhanmu',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.7,
-                ),
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.7,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -165,6 +131,70 @@ class CategoryScreen extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _CategoryFormDialog extends StatefulWidget {
+  const _CategoryFormDialog({this.category});
+
+  final Category? category;
+
+  @override
+  State<_CategoryFormDialog> createState() => _CategoryFormDialogState();
+}
+
+class _CategoryFormDialogState extends State<_CategoryFormDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.category?.name ?? '');
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.category != null;
+    return AlertDialog(
+      title: Text(isEditing ? 'Edit kategori' : 'Tambah kategori'),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            labelText: 'Nama kategori',
+            hintText: 'Contoh: Kos dekat kampus',
+            prefixIcon: Icon(Icons.category_outlined),
+          ),
+          validator: (value) => value == null || value.trim().isEmpty
+              ? 'Nama kategori wajib diisi.'
+              : null,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              Navigator.pop(context, _controller.text.trim());
+            }
+          },
+          child: const Text('Simpan'),
+        ),
+      ],
     );
   }
 }
