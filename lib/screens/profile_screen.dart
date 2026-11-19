@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/app_state.dart';
 import 'settings_screen.dart';
+import '../services/firebase_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,6 +17,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _savedEmail = '';
   String _savedPhone = '';
   String _savedInstitution = '';
+  bool _isUploadingData = false;
 
   @override
   void initState() {
@@ -47,6 +49,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Data akun berhasil direset. Profil sekarang kosong.')),
       );
+    }
+  }
+
+  // Fungsi untuk mengunggah Data Dummy (20 Kos & 5 Kategori) ke Firebase
+  Future<void> _uploadDummyDataToFirebase(BuildContext context) async {
+    setState(() {
+      _isUploadingData = true;
+    });
+
+    try {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final firebaseService = FirebaseService();
+
+      // Upload Kategori terlebih dahulu (Opsional)
+      // await firebaseService.addDummyCategories(appState.categories); // Membutuhkan penambahan fungsi di firebase_service
+
+      // Upload 20 Kost Dummy
+      int successCount = 0;
+      for (final kost in appState.items) {
+        // Hapus ID saat menambahkan agar Firestore membuatkan Auto-ID
+        final newKost = kost.copyWith(id: '');
+        final resultId = await firebaseService.addKost(newKost);
+        if (resultId != null) {
+          successCount++;
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$successCount data kos berhasil diunggah ke Firebase!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengunggah data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingData = false;
+        });
+      }
     }
   }
 
@@ -263,6 +315,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.school_outlined,
               title: 'Institusi / Kampus',
               subtitle: userCampus.isEmpty ? '-' : userCampus,
+            ),
+
+            const SizedBox(height: 24),
+
+            // DEV MENU: UPLOAD FIREBASE
+            const Text(
+              'Developer Menu (Hanya Sementara)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.amber),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isUploadingData ? null : () => _uploadDummyDataToFirebase(context),
+                icon: _isUploadingData
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.cloud_upload_rounded),
+                label: Text(
+                  _isUploadingData ? 'Mengunggah ke Firebase...' : 'Upload Data Kos (Dummy) ke Firebase',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.amber.shade700,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Klik tombol di atas untuk memindahkan 20 data kos (hardcoded) ke dalam database Firestore.',
+              style: TextStyle(fontSize: 11, color: Colors.grey),
             ),
 
             const SizedBox(height: 24),

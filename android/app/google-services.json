@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "453641013021",
+    "project_id": "finding-kost-id",
+    "storage_bucket": "finding-kost-id.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:453641013021:android:37dcd41ff85ec5c53583f4",
+        "android_client_info": {
+          "package_name": "com.example.tugas_kelompok"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG8J26Uft2ldBaarx_5ukv3KRotCWzuos"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
