@@ -1,10 +1,115 @@
 import 'package:flutter/material.dart';
-import '../models/kost_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/booking_model.dart';
 import '../models/category.dart';
+import '../models/kost_model.dart';
+import '../models/message_model.dart';
+import '../models/review_model.dart';
+import '../models/user_model.dart';
+import '../models/user_role.dart';
+import '../services/firebase_service.dart';
 
 class AppState extends ChangeNotifier {
-  // 1. Minimal 5 Record Referensi/Kategori
-  final List<Category> _categories = [
+  bool _isDarkMode = false;
+  bool get isDarkMode => _isDarkMode;
+
+  final FirebaseService _firebaseService;
+
+  void toggleDarkMode() {
+    _isDarkMode = !_isDarkMode;
+    notifyListeners();
+  }
+
+  // --- USER STATE & ROLE ---
+  UserModel _currentUser = UserModel(
+    id: 'user_seeker_1',
+    name: 'Pengguna',
+    email: 'pengguna@example.com',
+    phone: '+62 812 3456 7890',
+    role: UserRole.pencariKost,
+    institutionOrBusiness: 'Universitas Sumatera Utara',
+  );
+
+  UserModel get currentUser => _currentUser;
+  UserRole get currentRole => _currentUser.role;
+  bool get isOwner => _currentUser.role == UserRole.pemilikKost;
+  bool get isSeeker => _currentUser.role == UserRole.pencariKost;
+
+  void setCurrentUser(UserModel user) {
+    _currentUser = user;
+    _favoriteKostIds.clear();
+    _favoriteLoad = _loadFavoriteKostIds(user.id);
+    notifyListeners();
+  }
+
+  void setRole(UserRole role) {
+    _currentUser = _currentUser.copyWith(role: role);
+    notifyListeners();
+  }
+
+  void updateProfile({
+    String? name,
+    String? email,
+    String? phone,
+    String? institutionOrBusiness,
+  }) {
+    _currentUser = _currentUser.copyWith(
+      name: name,
+      email: email,
+      phone: phone,
+      institutionOrBusiness: institutionOrBusiness,
+    );
+    notifyListeners();
+  }
+
+  // --- FAVORITES (UNTUK PENCARI KOST) ---
+  static const _favoriteStorageKeyPrefix = 'favorite_kost_ids_';
+  final List<String> _favoriteKostIds = [];
+  Future<void> _favoriteLoad = Future<void>.value();
+
+  List<String> get favoriteKostIds => List.unmodifiable(_favoriteKostIds);
+
+  bool isFavorite(String id) => _favoriteKostIds.contains(id);
+
+  Future<bool> toggleFavorite(String id) async {
+    await _favoriteLoad;
+    final previousFavorites = List<String>.of(_favoriteKostIds);
+    if (_favoriteKostIds.contains(id)) {
+      _favoriteKostIds.remove(id);
+    } else {
+      _favoriteKostIds.add(id);
+    }
+    notifyListeners();
+
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final saved = await preferences.setStringList(
+        _favoriteStorageKey(_currentUser.id),
+        _favoriteKostIds,
+      );
+      if (saved) return true;
+    } catch (error, stackTrace) {
+      _favoriteKostIds
+        ..clear()
+        ..addAll(previousFavorites);
+      notifyListeners();
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+
+    _favoriteKostIds
+      ..clear()
+      ..addAll(previousFavorites);
+    notifyListeners();
+    return false;
+  }
+
+  List<Kost> get favoriteKosts {
+    return _kostList.where((k) => _favoriteKostIds.contains(k.id)).toList();
+  }
+
+  // --- CATEGORIES ---
+  List<Category> _categories = [
     Category(id: 'cat_1', name: 'Putri', iconName: 'female'),
     Category(id: 'cat_2', name: 'Putra', iconName: 'male'),
     Category(id: 'cat_3', name: 'Campur', iconName: 'people'),
@@ -12,218 +117,155 @@ class AppState extends ChangeNotifier {
     Category(id: 'cat_5', name: 'Bebas 24 Jam', iconName: 'access_time'),
   ];
 
-  // 2. Minimal 20 Record Utama (dengan Relasi CategoryID)
-  final List<Kost> _kostList = [
-    Kost(
-      id: '1',
-      categoryId: 'cat_1',
-      title: 'Kos Bahagia Medan',
-      location: 'Kec. Medan Baru • 500m dari lokasi',
-      price: 'Rp 850.000 / bulan',
-      rating: 4.8,
-      imageUrl: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=600',
-    ),
-    Kost(
-      id: '2',
-      categoryId: 'cat_1',
-      title: 'Kost Putri Harmoni',
-      location: 'Kec. Medan Selayang • 1.2km dari lokasi',
-      price: 'Rp 750.000 / bulan',
-      rating: 4.7,
-      imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600',
-    ),
-    Kost(
-      id: '3',
-      categoryId: 'cat_2',
-      title: 'Kost Mahasiswa Medan',
-      location: 'Kec. Medan Petisah • 2km dari lokasi',
-      price: 'Rp 700.000 / bulan',
-      rating: 4.6,
-      imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=600',
-    ),
-    Kost(
-      id: '4',
-      categoryId: 'cat_4',
-      title: 'Grand Residence Executive',
-      location: 'Kec. Medan Baru • 300m dari lokasi',
-      price: 'Rp 1.800.000 / bulan',
-      rating: 4.9,
-      imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=600',
-    ),
-    Kost(
-      id: '5',
-      categoryId: 'cat_3',
-      title: 'Kost Melati Campur',
-      location: 'Kec. Medan Tembung • 1.5km dari lokasi',
-      price: 'Rp 650.000 / bulan',
-      rating: 4.4,
-      imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=600',
-    ),
-    Kost(
-      id: '6',
-      categoryId: 'cat_5',
-      title: 'Kost Freedom 24 Jam',
-      location: 'Kec. Medan Sunggal • 800m dari lokasi',
-      price: 'Rp 900.000 / bulan',
-      rating: 4.5,
-      imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=600',
-    ),
-    Kost(
-      id: '7',
-      categoryId: 'cat_1',
-      title: 'Kost Anggrek Asri Putri',
-      location: 'Kec. Medan Kota • 1.1km dari lokasi',
-      price: 'Rp 800.000 / bulan',
-      rating: 4.7,
-      imageUrl: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=600',
-    ),
-    Kost(
-      id: '8',
-      categoryId: 'cat_2',
-      title: 'Kost Putra Perjuangan',
-      location: 'Kec. Medan Perjuangan • 900m dari lokasi',
-      price: 'Rp 720.000 / bulan',
-      rating: 4.3,
-      imageUrl: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=600',
-    ),
-    Kost(
-      id: '9',
-      categoryId: 'cat_4',
-      title: 'Royal Family Kost Exclusif',
-      location: 'Kec. Medan Polonia • 2.5km dari lokasi',
-      price: 'Rp 2.200.000 / bulan',
-      rating: 5.0,
-      imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600',
-    ),
-    Kost(
-      id: '10',
-      categoryId: 'cat_3',
-      title: 'Kost Griya Utama',
-      location: 'Kec. Medan Barat • 1.8km dari lokasi',
-      price: 'Rp 800.000 / bulan',
-      rating: 4.6,
-      imageUrl: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=600',
-    ),
-    Kost(
-      id: '11',
-      categoryId: 'cat_1',
-      title: 'Kost Mawar Indah Putri',
-      location: 'Kec. Medan Selayang • 600m dari lokasi',
-      price: 'Rp 820.000 / bulan',
-      rating: 4.8,
-      imageUrl: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=600',
-    ),
-    Kost(
-      id: '12',
-      categoryId: 'cat_5',
-      title: 'Kost NightOwl 24 Jam',
-      location: 'Kec. Medan Baru • 400m dari lokasi',
-      price: 'Rp 950.000 / bulan',
-      rating: 4.7,
-      imageUrl: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?q=80&w=600',
-    ),
-    Kost(
-      id: '13',
-      categoryId: 'cat_2',
-      title: 'Kost Putra Nusantara',
-      location: 'Kec. Medan Helvetia • 3km dari lokasi',
-      price: 'Rp 600.000 / bulan',
-      rating: 4.2,
-      imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600',
-    ),
-    Kost(
-      id: '14',
-      categoryId: 'cat_4',
-      title: 'Kencana Luxury Residence',
-      location: 'Kec. Medan Johor • 3.2km dari lokasi',
-      price: 'Rp 2.500.000 / bulan',
-      rating: 4.9,
-      imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=600',
-    ),
-    Kost(
-      id: '15',
-      categoryId: 'cat_3',
-      title: 'Kost Pelangi Kampus',
-      location: 'Kec. Medan Baru • 200m dari lokasi',
-      price: 'Rp 880.000 / bulan',
-      rating: 4.6,
-      imageUrl: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?q=80&w=600',
-    ),
-    Kost(
-      id: '16',
-      categoryId: 'cat_1',
-      title: 'Kost Cendana Putri',
-      location: 'Kec. Medan Tembung • 1.0km dari lokasi',
-      price: 'Rp 780.000 / bulan',
-      rating: 4.5,
-      imageUrl: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=600',
-    ),
-    Kost(
-      id: '17',
-      categoryId: 'cat_2',
-      title: 'Kost Garuda Putra',
-      location: 'Kec. Medan Denai • 2.1km dari lokasi',
-      price: 'Rp 680.000 / bulan',
-      rating: 4.3,
-      imageUrl: 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=600',
-    ),
-    Kost(
-      id: '18',
-      categoryId: 'cat_5',
-      title: 'Kost Central Park 24h',
-      location: 'Kec. Medan Petisah • 1.3km dari lokasi',
-      price: 'Rp 1.000.000 / bulan',
-      rating: 4.8,
-      imageUrl: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=600',
-    ),
-    Kost(
-      id: '19',
-      categoryId: 'cat_4',
-      title: 'The Suites Platinum',
-      location: 'Kec. Medan Baru • 100m dari lokasi',
-      price: 'Rp 3.000.000 / bulan',
-      rating: 5.0,
-      imageUrl: 'https://images.unsplash.com/photo-1567496898669-ee935f5f647a?q=80&w=600',
-    ),
-    Kost(
-      id: '20',
-      categoryId: 'cat_3',
-      title: 'Kost Harapan Kita',
-      location: 'Kec. Medan Maimun • 2.8km dari lokasi',
-      price: 'Rp 750.000 / bulan',
-      rating: 4.4,
-      imageUrl: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=600',
-    ),
-  ];
-
   List<Category> get categories => _categories;
+
+  // --- KOST LIST (Sekarang akan diambil dari Firebase) ---
+  List<Kost> _kostList = [];
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
   List<Kost> get items => _kostList;
 
-  // --- MODUL 1: CRUD KOST (DATA UTAMA) ---
-  void addKost(Kost kost) {
-    _kostList.add(kost);
+  // Constructor
+  AppState({FirebaseService? firebaseService})
+    : _firebaseService = firebaseService ?? FirebaseService() {
+    _favoriteLoad = _loadFavoriteKostIds(_currentUser.id);
+    _loadDataFromFirebase();
+  }
+
+  String _favoriteStorageKey(String userId) =>
+      '$_favoriteStorageKeyPrefix$userId';
+
+  Future<void> _loadFavoriteKostIds(String userId) async {
+    final preferences = await SharedPreferences.getInstance();
+    final savedIds = preferences.getStringList(_favoriteStorageKey(userId));
+    if (_currentUser.id != userId) return;
+
+    _favoriteKostIds
+      ..clear()
+      ..addAll(savedIds ?? (userId == 'user_seeker_1' ? ['1', '4', '9'] : []));
+
+    if (savedIds == null && userId == 'user_seeker_1') {
+      final saved = await preferences.setStringList(
+        _favoriteStorageKey(userId),
+        _favoriteKostIds,
+      );
+      if (!saved) {
+        throw StateError('Favorit awal gagal disimpan ke penyimpanan lokal.');
+      }
+    }
     notifyListeners();
   }
 
-  void updateKost(String id, Kost newKost) {
-    final index = _kostList.indexWhere((k) => k.id == id);
-    if (index != -1) {
-      _kostList[index] = newKost;
+  // ---------------------------------------------------------------------------
+  // INTEGRASI FIREBASE (MEMBACA DATA)
+  // ---------------------------------------------------------------------------
+  Future<void> _loadDataFromFirebase() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Mengambil data Kos dari Firestore
+      final firestoreKosts = await _firebaseService.getAllKosts();
+
+      // Jika di Firestore ada data, gunakan data tersebut
+      if (firestoreKosts.isNotEmpty) {
+        _kostList = firestoreKosts;
+      } else {
+        // Fallback ke data kosong jika belum ada di database
+        _kostList = [];
+      }
+
+      // (Opsional) 2. Mengambil Kategori dari Firestore
+      // Jika belum diupload, kita akan tetap pakai _categories hardcoded di atas.
+      // final firestoreCategories = await _firebaseService.getCategories();
+      // if (firestoreCategories.isNotEmpty) {
+      //   _categories = firestoreCategories;
+      // }
+    } catch (e) {
+      print("Gagal memuat data dari Firebase: $e");
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  void deleteKost(String id) {
-    _kostList.removeWhere((k) => k.id == id);
-    notifyListeners();
+  // Untuk memanggil reload data secara manual
+  Future<void> reloadData() async {
+    await _loadDataFromFirebase();
   }
 
-  // Alias method untuk kompatibilitas layar lama
+  // Filter items khusus untuk Pemilik Kost
+  List<Kost> get ownerItems {
+    if (currentRole == UserRole.pemilikKost) {
+      return _kostList
+          .where(
+            (k) => k.ownerId == _currentUser.id || k.ownerId == 'user_owner_1',
+          )
+          .toList();
+    }
+    return _kostList;
+  }
+
+  // --- MODUL 1: CRUD KOST (Telah Terhubung ke Firebase) ---
+  Future<void> addKost(Kost kost) async {
+    final resultId = await _firebaseService.addKost(kost);
+    if (resultId != null) {
+      final newKost = kost.copyWith(id: resultId);
+      _kostList.add(newKost);
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateKost(String id, Kost newKost) async {
+    final success = await _firebaseService.updateKost(newKost);
+    if (success) {
+      final index = _kostList.indexWhere((k) => k.id == id);
+      if (index != -1) {
+        _kostList[index] = newKost;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> deleteKost(String id) async {
+    final success = await _firebaseService.deleteKost(id);
+    if (success) {
+      _kostList.removeWhere((k) => k.id == id);
+      if (_favoriteKostIds.remove(id)) {
+        final preferences = await SharedPreferences.getInstance();
+        final saved = await preferences.setStringList(
+          _favoriteStorageKey(_currentUser.id),
+          _favoriteKostIds,
+        );
+        if (!saved) {
+          throw StateError('Perubahan favorit gagal disimpan.');
+        }
+      }
+      notifyListeners();
+    }
+  }
+
+  Future<void> toggleKostAvailability(String id) async {
+    final index = _kostList.indexWhere((k) => k.id == id);
+    if (index != -1) {
+      final current = _kostList[index];
+      final updatedKost = current.copyWith(isAvailable: !current.isAvailable);
+
+      final success = await _firebaseService.updateKost(updatedKost);
+      if (success) {
+        _kostList[index] = updatedKost;
+        notifyListeners();
+      }
+    }
+  }
+
+  // Compatibility aliases
   void addItem(Kost kost) => addKost(kost);
   void updateItem(String id, Kost newKost) => updateKost(id, newKost);
   void deleteItem(String id) => deleteKost(id);
 
-  // --- MODUL 2: CRUD CATEGORY (DATA REFERENSI) ---
+  // --- MODUL 2: CRUD CATEGORY (Sementara tetap lokal) ---
   void addCategory(Category category) {
     _categories.add(category);
     notifyListeners();
@@ -239,6 +281,133 @@ class AppState extends ChangeNotifier {
 
   void deleteCategory(String id) {
     _categories.removeWhere((c) => c.id == id);
+    notifyListeners();
+  }
+
+  // --- BOOKINGS & REVIEWS & ACTIVITY LOGS ---
+  final List<BookingModel> _bookings = [];
+  List<BookingModel> get bookings => _bookings;
+
+  void addBooking(BookingModel booking) {
+    _bookings.insert(0, booking);
+    _activityLogs.insert(0, 'Mengajukan sewa untuk ${booking.kostTitle}');
+    notifyListeners();
+  }
+
+  void updateBookingStatus(String id, String newStatus) {
+    final index = _bookings.indexWhere((b) => b.id == id);
+    if (index != -1) {
+      final booking = _bookings[index];
+      booking.status = newStatus;
+
+      if (newStatus == 'Disetujui') {
+        final kostIndex = _kostList.indexWhere((k) => k.id == booking.kostId);
+        if (kostIndex != -1) {
+          final currentKost = _kostList[kostIndex];
+          final remaining = (currentKost.availableRooms - 1).clamp(0, 999);
+          _kostList[kostIndex] = currentKost.copyWith(
+            availableRooms: remaining,
+            isAvailable: remaining > 0,
+          );
+        }
+      }
+
+      _activityLogs.insert(
+        0,
+        'Status booking ${booking.kostTitle} diubah menjadi $newStatus',
+      );
+      notifyListeners();
+    }
+  }
+
+  final Map<String, List<ReviewModel>> _reviewsMap = {
+    '1': [
+      ReviewModel(
+        id: 'r1',
+        kostId: '1',
+        userName: 'Nayla Syifa',
+        rating: 5.0,
+        comment: 'Kos sangat bersih dan dekat kampus USU!',
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      ReviewModel(
+        id: 'r2',
+        kostId: '1',
+        userName: 'Budi Santoso',
+        rating: 4.5,
+        comment: 'Pemilik ramah dan fasilitas lengkap.',
+        createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      ),
+    ],
+    '4': [
+      ReviewModel(
+        id: 'r3',
+        kostId: '4',
+        userName: 'Siti Rahma',
+        rating: 5.0,
+        comment: 'Eksklusif mewah, AC dingin, air panas lancar.',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+    ],
+  };
+
+  List<ReviewModel> getReviewsForKost(String kostId) {
+    return _reviewsMap[kostId] ?? [];
+  }
+
+  void addReview(ReviewModel review) {
+    if (_reviewsMap[review.kostId] == null) {
+      _reviewsMap[review.kostId] = [];
+    }
+    _reviewsMap[review.kostId]!.insert(0, review);
+    _activityLogs.insert(0, 'Menambahkan ulasan untuk kos');
+    notifyListeners();
+  }
+
+  final List<String> _activityLogs = [
+    'Masuk ke aplikasi Finding Kost',
+    'Menjelajahi katalog kos di Medan',
+  ];
+  List<String> get activityLogs => _activityLogs;
+
+  void logActivity(String message) {
+    _activityLogs.insert(0, message);
+    notifyListeners();
+  }
+
+  // --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
+  final List<MessageModel> _ownerMessages = [];
+
+  List<MessageModel> get ownerMessages => _ownerMessages;
+
+  void sendOwnerMessage(MessageModel msg) {
+    _ownerMessages.insert(0, msg);
+    _activityLogs.insert(
+      0,
+      'Mengirim pesan chat ke pemilik kos ${msg.kostTitle}',
+    );
+    notifyListeners();
+  }
+
+  void markMessageAsRead(String id) {
+    final index = _ownerMessages.indexWhere((m) => m.id == id);
+    if (index != -1) {
+      _ownerMessages[index].isRead = true;
+      notifyListeners();
+    }
+  }
+
+  // Notifikasi pemilik
+  final List<Map<String, dynamic>> _notifications = [];
+  List<Map<String, dynamic>> get notifications => _notifications;
+
+  void addNotification(String message, {required String targetOwnerId}) {
+    _notifications.insert(0, {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'message': message,
+      'targetOwnerId': targetOwnerId,
+      'createdAt': DateTime.now(),
+    });
     notifyListeners();
   }
 }

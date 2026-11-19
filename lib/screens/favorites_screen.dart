@@ -15,9 +15,6 @@ class FavoritesScreen extends StatelessWidget {
     final favoriteKosts = appState.favoriteKosts;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kos Tersimpan'),
-      ),
       body: favoriteKosts.isEmpty
           ? Center(
               child: Padding(
@@ -33,9 +30,6 @@ class FavoritesScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       'Belum ada kos tersimpan',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 8),
@@ -128,11 +122,7 @@ class FavoritesScreen extends StatelessWidget {
                                 Icons.bookmark_remove_rounded,
                                 color: Colors.redAccent,
                               ),
-                              onPressed: () {
-                                appState.toggleFavorite(kost.id);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Dihapus dari kos tersimpan'),
                                     duration: Duration(seconds: 2),
                                   ),
                                 );

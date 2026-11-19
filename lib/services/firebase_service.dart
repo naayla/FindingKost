@@ -3,7 +3,6 @@ import '../models/kost_model.dart';
 import '../models/category.dart';
 
 class FirebaseService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ---------------------------------------------------------------------------
   // 1. KOST (Properti/Kos) CRUD OPERATIONS
