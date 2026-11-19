@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/booking_model.dart';
 import '../models/category.dart';
 import '../models/kost_model.dart';
+import '../models/message_model.dart';
+import '../models/review_model.dart';
 import '../models/user_model.dart';
 import '../models/user_role.dart';
-<<<<<<< HEAD
 import '../services/firebase_service.dart';
-=======
-import '../models/booking_model.dart';
-import '../models/review_model.dart';
-import '../models/message_model.dart';
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
 
 class AppState extends ChangeNotifier {
   bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;
 
-  final FirebaseService _firebaseService = FirebaseService();
+  final FirebaseService _firebaseService;
 
   void toggleDarkMode() {
     _isDarkMode = !_isDarkMode;
     notifyListeners();
   }
 
-// --- USER STATE & ROLE ---
+  // --- USER STATE & ROLE ---
   UserModel _currentUser = UserModel(
     id: 'user_seeker_1',
     name: 'Pengguna',
@@ -39,6 +38,8 @@ class AppState extends ChangeNotifier {
 
   void setCurrentUser(UserModel user) {
     _currentUser = user;
+    _favoriteKostIds.clear();
+    _favoriteLoad = _loadFavoriteKostIds(user.id);
     notifyListeners();
   }
 
@@ -62,33 +63,53 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-// --- FAVORITES (UNTUK PENCARI KOST) ---
-  final List<String> _favoriteKostIds = ['1', '4', '9'];
+  // --- FAVORITES (UNTUK PENCARI KOST) ---
+  static const _favoriteStorageKeyPrefix = 'favorite_kost_ids_';
+  final List<String> _favoriteKostIds = [];
+  Future<void> _favoriteLoad = Future<void>.value();
 
-  List<String> get favoriteKostIds => _favoriteKostIds;
+  List<String> get favoriteKostIds => List.unmodifiable(_favoriteKostIds);
 
   bool isFavorite(String id) => _favoriteKostIds.contains(id);
 
-  void toggleFavorite(String id) {
+  Future<bool> toggleFavorite(String id) async {
+    await _favoriteLoad;
+    final previousFavorites = List<String>.of(_favoriteKostIds);
     if (_favoriteKostIds.contains(id)) {
       _favoriteKostIds.remove(id);
     } else {
       _favoriteKostIds.add(id);
     }
     notifyListeners();
+
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final saved = await preferences.setStringList(
+        _favoriteStorageKey(_currentUser.id),
+        _favoriteKostIds,
+      );
+      if (saved) return true;
+    } catch (error, stackTrace) {
+      _favoriteKostIds
+        ..clear()
+        ..addAll(previousFavorites);
+      notifyListeners();
+      Error.throwWithStackTrace(error, stackTrace);
+    }
+
+    _favoriteKostIds
+      ..clear()
+      ..addAll(previousFavorites);
+    notifyListeners();
+    return false;
   }
 
   List<Kost> get favoriteKosts {
     return _kostList.where((k) => _favoriteKostIds.contains(k.id)).toList();
   }
 
-<<<<<<< HEAD
   // --- CATEGORIES ---
   List<Category> _categories = [
-=======
-// --- CATEGORIES (MINIMAL 5 REFERENSI) ---
-  final List<Category> _categories = [
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
     Category(id: 'cat_1', name: 'Putri', iconName: 'female'),
     Category(id: 'cat_2', name: 'Putra', iconName: 'male'),
     Category(id: 'cat_3', name: 'Campur', iconName: 'people'),
@@ -98,7 +119,6 @@ class AppState extends ChangeNotifier {
 
   List<Category> get categories => _categories;
 
-<<<<<<< HEAD
   // --- KOST LIST (Sekarang akan diambil dari Firebase) ---
   List<Kost> _kostList = [];
   bool _isLoading = false;
@@ -107,8 +127,34 @@ class AppState extends ChangeNotifier {
   List<Kost> get items => _kostList;
 
   // Constructor
-  AppState() {
+  AppState({FirebaseService? firebaseService})
+    : _firebaseService = firebaseService ?? FirebaseService() {
+    _favoriteLoad = _loadFavoriteKostIds(_currentUser.id);
     _loadDataFromFirebase();
+  }
+
+  String _favoriteStorageKey(String userId) =>
+      '$_favoriteStorageKeyPrefix$userId';
+
+  Future<void> _loadFavoriteKostIds(String userId) async {
+    final preferences = await SharedPreferences.getInstance();
+    final savedIds = preferences.getStringList(_favoriteStorageKey(userId));
+    if (_currentUser.id != userId) return;
+
+    _favoriteKostIds
+      ..clear()
+      ..addAll(savedIds ?? (userId == 'user_seeker_1' ? ['1', '4', '9'] : []));
+
+    if (savedIds == null && userId == 'user_seeker_1') {
+      final saved = await preferences.setStringList(
+        _favoriteStorageKey(userId),
+        _favoriteKostIds,
+      );
+      if (!saved) {
+        throw StateError('Favorit awal gagal disimpan ke penyimpanan lokal.');
+      }
+    }
+    notifyListeners();
   }
 
   // ---------------------------------------------------------------------------
@@ -121,7 +167,7 @@ class AppState extends ChangeNotifier {
     try {
       // 1. Mengambil data Kos dari Firestore
       final firestoreKosts = await _firebaseService.getAllKosts();
-      
+
       // Jika di Firestore ada data, gunakan data tersebut
       if (firestoreKosts.isNotEmpty) {
         _kostList = firestoreKosts;
@@ -130,13 +176,12 @@ class AppState extends ChangeNotifier {
         _kostList = [];
       }
 
-      // (Opsional) 2. Mengambil Kategori dari Firestore 
+      // (Opsional) 2. Mengambil Kategori dari Firestore
       // Jika belum diupload, kita akan tetap pakai _categories hardcoded di atas.
       // final firestoreCategories = await _firebaseService.getCategories();
       // if (firestoreCategories.isNotEmpty) {
       //   _categories = firestoreCategories;
       // }
-
     } catch (e) {
       print("Gagal memuat data dari Firebase: $e");
     } finally {
@@ -151,403 +196,23 @@ class AppState extends ChangeNotifier {
   }
 
   // Filter items khusus untuk Pemilik Kost
-=======
-// --- KOST LIST (20 DATA DI MEDAN) ---
-  final List<Kost> _kostList = [
-    Kost(
-      id: '1',
-      categoryId: 'cat_1',
-      title: 'Kos Bahagia Medan Baru',
-      location: 'Jl. Dr. Mansyur, Kec. Medan Baru',
-      price: 'Rp 850.000 / bulan',
-      rating: 4.8,
-      imageUrl: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=600',
-      latitude: 3.5651,
-      longitude: 98.6538,
-      facilities: ['WiFi', 'Kamar Mandi Dalam', 'AC', 'Kasur', 'Lemari', 'Parkir'],
-      ownerId: 'owner_1',
-      ownerName: 'H. Rahmad S.T.',
-      ownerPhone: '+6281234567890',
-      description: 'Kos khusus putri aman 24 jam dengan gerbang terunci. Berada sangat dekat dengan pintu masuk USU Medan.',
-      isAvailable: true,
-      availableRooms: 4,
-    ),
-    Kost(
-      id: '2',
-      categoryId: 'cat_1',
-      title: 'Kost Putri Harmoni',
-      location: 'Jl. Setiabudi, Kec. Medan Selayang',
-      price: 'Rp 750.000 / bulan',
-      rating: 4.7,
-      imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600',
-      latitude: 3.5592,
-      longitude: 98.6472,
-      facilities: ['WiFi', 'Kasur', 'Lemari', 'Meja Belajar', 'Dapur Bersama'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Lingkungan asri, tenang, sangat cocok untuk mahasiswa yang butuh suasana fokus belajar.',
-      isAvailable: true,
-      availableRooms: 2,
-    ),
-    Kost(
-      id: '3',
-      categoryId: 'cat_2',
-      title: 'Kost Mahasiswa Medan Petisah',
-      location: 'Jl. Gatot Subroto, Kec. Medan Petisah',
-      price: 'Rp 700.000 / bulan',
-      rating: 4.6,
-      imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=600',
-      latitude: 3.5910,
-      longitude: 98.6650,
-      facilities: ['WiFi', 'Parkir Motor Luas', 'Kasur', 'Lemari'],
-      ownerId: 'owner_2',
-      ownerName: 'Bpk. Hendra Kurniawan',
-      ownerPhone: '+6285211223344',
-      description: 'Kos putra praktis dekat kawasan bisnis dan angkutan umum kota Medan.',
-      isAvailable: true,
-      availableRooms: 5,
-    ),
-    Kost(
-      id: '4',
-      categoryId: 'cat_4',
-      title: 'Grand Residence Executive',
-      location: 'Jl. Babura, Kec. Medan Baru',
-      price: 'Rp 1.800.000 / bulan',
-      rating: 4.9,
-      imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=600',
-      latitude: 3.5780,
-      longitude: 98.6601,
-      facilities: ['Smart TV', 'AC', 'Water Heater', 'Kamar Mandi Dalam', 'Kulkas', 'WiFi Super Cepat', 'Parkir Mobil'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Kos eksklusif bergaya hotel bintang 3 lengkap dengan layanan kebersihan kamar mingguan.',
-      isAvailable: true,
-      availableRooms: 2,
-    ),
-    Kost(
-      id: '5',
-      categoryId: 'cat_3',
-      title: 'Kost Melati Campur',
-      location: 'Jl. Aksara, Kec. Medan Tembung',
-      price: 'Rp 650.000 / bulan',
-      rating: 4.4,
-      imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=600',
-      latitude: 3.5980,
-      longitude: 98.7010,
-      facilities: ['Kamar Mandi Dalam', 'Kasur', 'Lemari', 'CCTV 24 Jam'],
-      ownerId: 'owner_3',
-      ownerName: 'Ibu Sinta',
-      ownerPhone: '+6282165430099',
-      description: 'Akses mudah ke pusat perbelanjaan dan stasiun kereta api Medan.',
-      isAvailable: true,
-      availableRooms: 3,
-    ),
-    Kost(
-      id: '6',
-      categoryId: 'cat_5',
-      title: 'Kost Freedom 24 Jam',
-      location: 'Jl. Sunggal, Kec. Medan Sunggal',
-      price: 'Rp 900.000 / bulan',
-      rating: 4.5,
-      imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=600',
-      latitude: 3.5822,
-      longitude: 98.6321,
-      facilities: ['Akses Kunci Digital 24 Jam', 'WiFi', 'AC', 'Kasur Springbed', 'Laundry Bag'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Akses gerbang mandiri 24 jam dengan sistem pin digital, cocok untuk pekerja shift.',
-      isAvailable: true,
-      availableRooms: 6,
-    ),
-    Kost(
-      id: '7',
-      categoryId: 'cat_1',
-      title: 'Kost Anggrek Asri Putri',
-      location: 'Jl. SM Raja, Kec. Medan Kota',
-      price: 'Rp 800.000 / bulan',
-      rating: 4.7,
-      imageUrl: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=600',
-      latitude: 3.5700,
-      longitude: 98.6850,
-      facilities: ['WiFi', 'Kamar Mandi Dalam', 'Dapur', 'Balkon Atas'],
-      ownerId: 'owner_4',
-      ownerName: 'Bpk. Drs. Subagyo',
-      ownerPhone: '+6281277889900',
-      description: 'Dekat dengan Masjid Raya Medan dan Istana Maimun, area tenang dan bersih.',
-      isAvailable: true,
-      availableRooms: 1,
-    ),
-    Kost(
-      id: '8',
-      categoryId: 'cat_2',
-      title: 'Kost Putra Perjuangan',
-      location: 'Jl. Prof. HM Yamin, Kec. Medan Perjuangan',
-      price: 'Rp 720.000 / bulan',
-      rating: 4.3,
-      imageUrl: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=600',
-      latitude: 3.6012,
-      longitude: 98.6880,
-      facilities: ['WiFi', 'Kasur', 'Lemari', 'Parkir Motor Terpadu'],
-      ownerId: 'owner_5',
-      ownerName: 'Bpk. Faisal',
-      ownerPhone: '+6285399887766',
-      description: 'Sangat hemat untuk mahasiswa Unimed / UINSU dengan tempat tidur nyaman.',
-      isAvailable: true,
-      availableRooms: 4,
-    ),
-    Kost(
-      id: '9',
-      categoryId: 'cat_4',
-      title: 'Royal Family Kost Exclusif',
-      location: 'Jl. Polonia, Kec. Medan Polonia',
-      price: 'Rp 2.200.000 / bulan',
-      rating: 5.0,
-      imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600',
-      latitude: 3.5580,
-      longitude: 98.6720,
-      facilities: ['Kolam Renang Mini', 'Gym Access', 'AC', 'Water Heater', 'Smart Lock', 'Room Service'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Hunian mewah eksklusif di kawasan privat elit Polonia Medan.',
-      isAvailable: true,
-      availableRooms: 2,
-    ),
-    Kost(
-      id: '10',
-      categoryId: 'cat_3',
-      title: 'Kost Griya Utama',
-      location: 'Jl. Amir Hamzah, Kec. Medan Barat',
-      price: 'Rp 800.000 / bulan',
-      rating: 4.6,
-      imageUrl: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=600',
-      latitude: 3.6050,
-      longitude: 98.6600,
-      facilities: ['WiFi', 'AC', 'Kamar Mandi Dalam', 'Ruang Tamu'],
-      ownerId: 'owner_6',
-      ownerName: 'Ibu Maya',
-      ownerPhone: '+6281233445566',
-      description: 'Dekat dengan Merdeka Walk dan Lapangan Merdeka Medan.',
-      isAvailable: true,
-      availableRooms: 3,
-    ),
-    Kost(
-      id: '11',
-      categoryId: 'cat_1',
-      title: 'Kost Mawar Indah Putri',
-      location: 'Jl. Flamboyan Raya, Kec. Medan Selayang',
-      price: 'Rp 820.000 / bulan',
-      rating: 4.8,
-      imageUrl: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=600',
-      latitude: 3.5480,
-      longitude: 98.6380,
-      facilities: ['WiFi', 'AC', 'Kasur Queen', 'CCTV', 'Mesin Cuci'],
-      ownerId: 'owner_7',
-      ownerName: 'Ibu Tari',
-      ownerPhone: '+6281311223344',
-      description: 'Lingkungan sangat hijau, sejuk, ramah mahasiswi.',
-      isAvailable: true,
-      availableRooms: 2,
-    ),
-    Kost(
-      id: '12',
-      categoryId: 'cat_5',
-      title: 'Kost NightOwl 24 Jam',
-      location: 'Jl. Kampus USU, Kec. Medan Baru',
-      price: 'Rp 950.000 / bulan',
-      rating: 4.7,
-      imageUrl: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?q=80&w=600',
-      latitude: 3.5680,
-      longitude: 98.6570,
-      facilities: ['WiFi High-Speed 100Mbps', 'Akses 24 Jam', 'AC', 'Meja Kerja Ergonomis'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Dirancang khusus untuk freelancer dan mahasiswa akhir yang sering mengerjakan tugas hingga larut malam.',
-      isAvailable: true,
-      availableRooms: 3,
-    ),
-    Kost(
-      id: '13',
-      categoryId: 'cat_2',
-      title: 'Kost Putra Nusantara',
-      location: 'Jl. Helvetia Raya, Kec. Medan Helvetia',
-      price: 'Rp 600.000 / bulan',
-      rating: 4.2,
-      imageUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600',
-      latitude: 3.6180,
-      longitude: 98.6420,
-      facilities: ['WiFi', 'Kasur', 'Lemari', 'Parkir Motor Inside'],
-      ownerId: 'owner_8',
-      ownerName: 'Bpk. Doni',
-      ownerPhone: '+6285233441122',
-      description: 'Harga super ramah kantong dengan lokasi strategis Medan Helvetia.',
-      isAvailable: true,
-      availableRooms: 7,
-    ),
-    Kost(
-      id: '14',
-      categoryId: 'cat_4',
-      title: 'Kencana Luxury Residence',
-      location: 'Jl. Karya Wisata, Kec. Medan Johor',
-      price: 'Rp 2.500.000 / bulan',
-      rating: 4.9,
-      imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=600',
-      latitude: 3.5290,
-      longitude: 98.6650,
-      facilities: ['Full Furnished Premium', 'Smart TV 43"', 'Bathtub', 'AC Inverter', 'Security 24 Jam'],
-      ownerId: 'owner_9',
-      ownerName: 'Bpk. Ir. Rian Kencana',
-      ownerPhone: '+6281122334455',
-      description: 'Hunian eksklusif seluas studio apartemen di kompleks perumahan elite Medan Johor.',
-      isAvailable: false,
-      availableRooms: 0,
-    ),
-    Kost(
-      id: '15',
-      categoryId: 'cat_3',
-      title: 'Kost Pelangi Kampus',
-      location: 'Jl. Padang Bulan, Kec. Medan Baru',
-      price: 'Rp 880.000 / bulan',
-      rating: 4.6,
-      imageUrl: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?q=80&w=600',
-      latitude: 3.5610,
-      longitude: 98.6500,
-      facilities: ['WiFi', 'AC', 'Kamar Mandi Dalam', 'Jemuran Baju'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Hanya 3 menit jalan kaki menuju fakultas Teknik & Kedokteran USU.',
-      isAvailable: true,
-      availableRooms: 2,
-    ),
-    Kost(
-      id: '16',
-      categoryId: 'cat_1',
-      title: 'Kost Cendana Putri',
-      location: 'Jl. Letda Sujono, Kec. Medan Tembung',
-      price: 'Rp 780.000 / bulan',
-      rating: 4.5,
-      imageUrl: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=600',
-      latitude: 3.6020,
-      longitude: 98.7120,
-      facilities: ['WiFi', 'Kamar Mandi Dalam', 'Dapur', 'Dispenser Air'],
-      ownerId: 'owner_10',
-      ownerName: 'Ibu Rosma',
-      ownerPhone: '+6281377665544',
-      description: 'Dekat dengan gerbang Tol Bandar Selamat dan Stasiun Kereta.',
-      isAvailable: true,
-      availableRooms: 4,
-    ),
-    Kost(
-      id: '17',
-      categoryId: 'cat_2',
-      title: 'Kost Garuda Putra',
-      location: 'Jl. Menteng, Kec. Medan Denai',
-      price: 'Rp 680.000 / bulan',
-      rating: 4.3,
-      imageUrl: 'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=600',
-      latitude: 3.5620,
-      longitude: 98.7050,
-      facilities: ['Kasur', 'Lemari', 'Parkir Motor', 'WiFi'],
-      ownerId: 'owner_11',
-      ownerName: 'Bpk. Edi',
-      ownerPhone: '+6285200112233',
-      description: 'Lingkungan aman dan tenang di kawasan Medan Denai.',
-      isAvailable: true,
-      availableRooms: 3,
-    ),
-    Kost(
-      id: '18',
-      categoryId: 'cat_5',
-      title: 'Kost Central Park 24h',
-      location: 'Jl. Orion, Kec. Medan Petisah',
-      price: 'Rp 1.000.000 / bulan',
-      rating: 4.8,
-      imageUrl: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=600',
-      latitude: 3.5890,
-      longitude: 98.6690,
-      facilities: ['Akses Bebas 24 Jam', 'AC', 'WiFi 50Mbps', 'Water Heater', 'Kamar Mandi Dalam'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Dekat dengan Medan Fair Plaza dan pusat kuliner malam Medan.',
-      isAvailable: true,
-      availableRooms: 1,
-    ),
-    Kost(
-      id: '19',
-      categoryId: 'cat_4',
-      title: 'The Suites Platinum',
-      location: 'Jl. Univ. Sumatera Utara, Kec. Medan Baru',
-      price: 'Rp 3.000.000 / bulan',
-      rating: 5.0,
-      imageUrl: 'https://images.unsplash.com/photo-1567496898669-ee935f5f647a?q=80&w=600',
-      latitude: 3.5670,
-      longitude: 98.6550,
-      facilities: ['Smart TV 50"', 'Private Kitchenette', 'Balcony View', 'King Bed', 'Card Access', 'Gym'],
-      ownerId: 'user_owner_1',
-      ownerName: 'Ibu Hj. Aminah',
-      ownerPhone: '+6281398765432',
-      description: 'Kost super luxury terbaik di Medan Baru dengan pemandangan kota.',
-      isAvailable: true,
-      availableRooms: 2,
-    ),
-    Kost(
-      id: '20',
-      categoryId: 'cat_3',
-      title: 'Kost Harapan Kita',
-      location: 'Jl. Brigjend Katamso, Kec. Medan Maimun',
-      price: 'Rp 750.000 / bulan',
-      rating: 4.4,
-      imageUrl: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?q=80&w=600',
-      latitude: 3.5750,
-      longitude: 98.6810,
-      facilities: ['WiFi', 'Kamar Mandi Dalam', 'Lemari Pakaian', 'Kipas Angin / AC'],
-      ownerId: 'owner_12',
-      ownerName: 'Bpk. Surya',
-      ownerPhone: '+6281299001122',
-      description: 'Dekat kantor perbankan dan Istana Maimun, lokasi sangat strategis.',
-      isAvailable: true,
-      availableRooms: 5,
-    ),
-  ];
-
-  List<Kost> get items => _kostList;
-
-// Filter items khusus untuk Pemilik Kost
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
   List<Kost> get ownerItems {
     if (currentRole == UserRole.pemilikKost) {
       return _kostList
-          .where((k) => k.ownerId == _currentUser.id || k.ownerId == 'user_owner_1')
+          .where(
+            (k) => k.ownerId == _currentUser.id || k.ownerId == 'user_owner_1',
+          )
           .toList();
     }
     return _kostList;
   }
 
-<<<<<<< HEAD
   // --- MODUL 1: CRUD KOST (Telah Terhubung ke Firebase) ---
   Future<void> addKost(Kost kost) async {
     final resultId = await _firebaseService.addKost(kost);
     if (resultId != null) {
       final newKost = kost.copyWith(id: resultId);
       _kostList.add(newKost);
-=======
-// --- MODUL 1: CRUD KOST (DATA UTAMA) ---
-  void addKost(Kost kost) {
-    _kostList.add(kost);
-    notifyListeners();
-  }
-
-  void updateKost(String id, Kost newKost) {
-    final index = _kostList.indexWhere((k) => k.id == id);
-    if (index != -1) {
-      _kostList[index] = newKost;
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
       notifyListeners();
     }
   }
@@ -567,7 +232,16 @@ class AppState extends ChangeNotifier {
     final success = await _firebaseService.deleteKost(id);
     if (success) {
       _kostList.removeWhere((k) => k.id == id);
-      _favoriteKostIds.remove(id);
+      if (_favoriteKostIds.remove(id)) {
+        final preferences = await SharedPreferences.getInstance();
+        final saved = await preferences.setStringList(
+          _favoriteStorageKey(_currentUser.id),
+          _favoriteKostIds,
+        );
+        if (!saved) {
+          throw StateError('Perubahan favorit gagal disimpan.');
+        }
+      }
       notifyListeners();
     }
   }
@@ -576,37 +250,22 @@ class AppState extends ChangeNotifier {
     final index = _kostList.indexWhere((k) => k.id == id);
     if (index != -1) {
       final current = _kostList[index];
-<<<<<<< HEAD
       final updatedKost = current.copyWith(isAvailable: !current.isAvailable);
-      
+
       final success = await _firebaseService.updateKost(updatedKost);
       if (success) {
         _kostList[index] = updatedKost;
         notifyListeners();
       }
-=======
-      final nextStatus = !current.isAvailable;
-      _kostList[index] = current.copyWith(
-        isAvailable: nextStatus,
-        availableRooms: nextStatus
-            ? (current.availableRooms == 0 ? 1 : current.availableRooms)
-            : 0,
-      );
-      notifyListeners();
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
     }
   }
 
-// Compatibility aliases
+  // Compatibility aliases
   void addItem(Kost kost) => addKost(kost);
   void updateItem(String id, Kost newKost) => updateKost(id, newKost);
   void deleteItem(String id) => deleteKost(id);
 
-<<<<<<< HEAD
   // --- MODUL 2: CRUD CATEGORY (Sementara tetap lokal) ---
-=======
-// --- MODUL 2: CRUD CATEGORY (DATA REFERENSI) ---
->>>>>>> b762d565e8992a5964052fc0a13684cb365ea823
   void addCategory(Category category) {
     _categories.add(category);
     notifyListeners();
@@ -625,7 +284,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-// --- BOOKINGS & REVIEWS & ACTIVITY LOGS ---
+  // --- BOOKINGS & REVIEWS & ACTIVITY LOGS ---
   final List<BookingModel> _bookings = [];
   List<BookingModel> get bookings => _bookings;
 
@@ -689,7 +348,7 @@ class AppState extends ChangeNotifier {
         comment: 'Eksklusif mewah, AC dingin, air panas lancar.',
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
       ),
-    ]
+    ],
   };
 
   List<ReviewModel> getReviewsForKost(String kostId) {
@@ -716,14 +375,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-// --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
+  // --- OWNER MESSAGES & CHAT NOTIFICATIONS ---
   final List<MessageModel> _ownerMessages = [];
 
   List<MessageModel> get ownerMessages => _ownerMessages;
 
   void sendOwnerMessage(MessageModel msg) {
     _ownerMessages.insert(0, msg);
-    _activityLogs.insert(0, 'Mengirim pesan chat ke pemilik kos ${msg.kostTitle}');
+    _activityLogs.insert(
+      0,
+      'Mengirim pesan chat ke pemilik kos ${msg.kostTitle}',
+    );
     notifyListeners();
   }
 
@@ -735,7 +397,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-// Notifikasi pemilik
+  // Notifikasi pemilik
   final List<Map<String, dynamic>> _notifications = [];
   List<Map<String, dynamic>> get notifications => _notifications;
 
