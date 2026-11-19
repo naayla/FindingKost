@@ -7,6 +7,7 @@ import 'favorites_screen.dart';
 import 'form_item_screen.dart';
 import 'home_screen.dart';
 import 'map_screen.dart';
+import 'owner_inbox_screen.dart';
 import 'profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -23,11 +24,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     final isOwner = context.select<AppState, bool>((s) => s.isOwner);
 
-    // Define navigation items based on User Role with explicit keys
     final List<Widget> screens = isOwner
         ? const [
             HomeScreen(key: ValueKey('owner-home')),
             FormItemScreen(key: ValueKey('owner-form')),
+            OwnerInboxScreen(key: ValueKey('owner-inbox')),
             MapScreen(key: ValueKey('owner-map')),
             CategoryScreen(key: ValueKey('owner-category')),
             ProfileScreen(key: ValueKey('owner-profile')),
@@ -45,19 +46,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               key: ValueKey('nav-owner-katalog'),
               icon: Icon(Icons.dashboard_outlined),
               selectedIcon: Icon(Icons.dashboard_rounded),
-              label: 'Katalog Saya',
+              label: 'Katalog',
             ),
             NavigationDestination(
               key: ValueKey('nav-owner-tambah'),
               icon: Icon(Icons.add_circle_outline_rounded),
               selectedIcon: Icon(Icons.add_circle_rounded),
-              label: 'Tambah Kos',
+              label: 'Tambah',
+            ),
+            NavigationDestination(
+              key: ValueKey('nav-owner-inbox'),
+              icon: Icon(Icons.chat_bubble_outline_rounded),
+              selectedIcon: Icon(Icons.chat_bubble_rounded),
+              label: 'Pesan',
             ),
             NavigationDestination(
               key: ValueKey('nav-owner-peta'),
               icon: Icon(Icons.map_outlined),
               selectedIcon: Icon(Icons.map_rounded),
-              label: 'Peta Sebaran',
+              label: 'Peta',
             ),
             NavigationDestination(
               key: ValueKey('nav-owner-kategori'),
@@ -69,7 +76,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               key: ValueKey('nav-owner-profil'),
               icon: Icon(Icons.person_outline_rounded),
               selectedIcon: Icon(Icons.person_rounded),
-              label: 'Profil Saya',
+              label: 'Profil',
             ),
           ]
         : const [

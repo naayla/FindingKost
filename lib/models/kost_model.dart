@@ -14,6 +14,10 @@ class Kost {
   final String ownerPhone;
   final String description;
   final bool isAvailable;
+  final int availableRooms;
+  final String? genderRule;
+  final String? marriageStatus;
+  final String? maxOccupants;
 
   Kost({
     required this.id,
@@ -27,11 +31,29 @@ class Kost {
     this.longitude = 98.6722,
     this.facilities = const ['WiFi', 'Kamar Mandi Dalam', 'AC', 'Kasur'],
     this.ownerId = 'owner_1',
-    this.ownerName = 'Bapak H. Rahmad',
+    this.ownerName = 'Pemilik Kos',
     this.ownerPhone = '+6281234567890',
-    this.description = 'Kos bersih, aman, dan nyaman berlokasi strategis dekat fasilitas umum dan kampus.',
+    this.description =
+    'Kos bersih, aman, dan nyaman berlokasi strategis dekat fasilitas umum dan kampus.',
     this.isAvailable = true,
+    this.availableRooms = 3,
+    this.genderRule,
+    this.marriageStatus,
+    this.maxOccupants,
   });
+
+  int get safeAvailableRooms => isAvailable ? availableRooms : 0;
+
+  String get safeGenderRule =>
+      (genderRule != null && genderRule!.isNotEmpty) ? genderRule! : 'Campur / Bebas';
+  String get safeMarriageStatus =>
+      (marriageStatus != null && marriageStatus!.isNotEmpty)
+          ? marriageStatus!
+          : 'Pasutri Diizinkan';
+  String get safeMaxOccupants =>
+      (maxOccupants != null && maxOccupants!.isNotEmpty)
+          ? maxOccupants!
+          : '2 Orang / Kamar';
 
   Kost copyWith({
     String? id,
@@ -49,6 +71,10 @@ class Kost {
     String? ownerPhone,
     String? description,
     bool? isAvailable,
+    int? availableRooms,
+    String? genderRule,
+    String? marriageStatus,
+    String? maxOccupants,
   }) {
     return Kost(
       id: id ?? this.id,
@@ -66,6 +92,10 @@ class Kost {
       ownerPhone: ownerPhone ?? this.ownerPhone,
       description: description ?? this.description,
       isAvailable: isAvailable ?? this.isAvailable,
+      availableRooms: availableRooms ?? this.availableRooms,
+      genderRule: genderRule ?? this.genderRule,
+      marriageStatus: marriageStatus ?? this.marriageStatus,
+      maxOccupants: maxOccupants ?? this.maxOccupants,
     );
   }
 }

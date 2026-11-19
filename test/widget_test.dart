@@ -25,7 +25,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const FindingKostApp());
-    await tester.tap(find.textContaining('Masuk').first);
+    await tester.tap(find.widgetWithText(FilledButton, 'Masuk sebagai Pencari Kost'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Chat dengan asisten'));
@@ -59,14 +59,14 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const FindingKostApp());
-    await tester.tap(find.textContaining('Masuk').first);
+    await tester.tap(find.widgetWithText(FilledButton, 'Masuk sebagai Pencari Kost'));
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('nav-seeker-profil')));
     await tester.pumpAndSettle();
-    expect(find.text('Nayla Syifa Tanjung'), findsOneWidget);
+    expect(find.text('Pengguna'), findsOneWidget);
 
     await tester.tap(find.text('Edit Profil'));
     await tester.pumpAndSettle();

@@ -14,7 +14,7 @@ class ActivityItem {
     required this.description,
     required this.timestamp,
     this.icon = Icons.history_rounded,
-    this.themeColor = const Color(0xFF2D6A4F), // Default warna hijau My Maps
+    this.themeColor = const Color(0xFF2D6A4F),
   });
 }
 
@@ -38,7 +38,6 @@ class ActivityProvider with ChangeNotifier {
 
   List<ActivityItem> get activities => [..._activities];
 
-  // Menambahkan riwayat aktivitas baru
   void addActivity({
     required String title,
     required String description,
@@ -57,7 +56,6 @@ class ActivityProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Menghapus seluruh riwayat aktivitas
   void clearActivities() {
     _activities.clear();
     notifyListeners();

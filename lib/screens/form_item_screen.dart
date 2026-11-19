@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/kost_model.dart';
 import '../providers/app_state.dart';
 import '../widgets/kost_image.dart';
+import 'main_navigation_screen.dart';
 
 class FormItemScreen extends StatefulWidget {
   final Kost? itemToEdit;
@@ -19,6 +20,7 @@ class _FormItemScreenState extends State<FormItemScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _locationController;
   late final TextEditingController _priceController;
+  late final TextEditingController _availableRoomsController;
   late final TextEditingController _imageController;
   late final TextEditingController _latController;
   late final TextEditingController _lngController;
@@ -30,6 +32,9 @@ class _FormItemScreenState extends State<FormItemScreen> {
   late bool _isAvailable;
   String? _selectedCategoryId;
   late List<String> _selectedFacilities;
+  late String _genderRule;
+  late String _marriageStatus;
+  late String _maxOccupants;
 
   static const List<String> _availableFacilityOptions = [
     'WiFi',
@@ -51,6 +56,9 @@ class _FormItemScreenState extends State<FormItemScreen> {
     _titleController = TextEditingController(text: item?.title ?? '');
     _locationController = TextEditingController(text: item?.location ?? '');
     _priceController = TextEditingController(text: item?.price ?? '');
+    _availableRoomsController = TextEditingController(
+      text: (item?.availableRooms ?? 3).toString(),
+    );
     _imageController = TextEditingController(text: item?.imageUrl ?? '');
     _latController = TextEditingController(
       text: (item?.latitude ?? 3.5651).toString(),
@@ -75,6 +83,9 @@ class _FormItemScreenState extends State<FormItemScreen> {
     _selectedFacilities = List.from(
       item?.facilities ?? ['WiFi', 'Kamar Mandi Dalam', 'AC', 'Kasur'],
     );
+    _genderRule = item?.genderRule ?? 'Campur / Bebas';
+    _marriageStatus = item?.marriageStatus ?? 'Pasutri Diizinkan';
+    _maxOccupants = item?.maxOccupants ?? '2 Orang / Kamar';
   }
 
   @override
@@ -82,6 +93,7 @@ class _FormItemScreenState extends State<FormItemScreen> {
     _titleController.dispose();
     _locationController.dispose();
     _priceController.dispose();
+    _availableRoomsController.dispose();
     _imageController.dispose();
     _latController.dispose();
     _lngController.dispose();
@@ -97,15 +109,19 @@ class _FormItemScreenState extends State<FormItemScreen> {
     final appState = context.read<AppState>();
     final categories = appState.categories;
     final categoryId =
-        categories.any((category) => category.id == _selectedCategoryId)
-            ? _selectedCategoryId
-            : categories.firstOrNull?.id;
+    categories.any((category) => category.id == _selectedCategoryId)
+        ? _selectedCategoryId
+        : categories.firstOrNull?.id;
     if (categoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tambahkan kategori terlebih dahulu.')),
       );
       return;
     }
+
+    final parsedRooms =
+        int.tryParse(_availableRoomsController.text.trim()) ?? 0;
+    final finalRooms = _isAvailable ? (parsedRooms > 0 ? parsedRooms : 1) : 0;
 
     final isEditing = widget.itemToEdit != null;
     final newKost = Kost(
@@ -127,7 +143,11 @@ class _FormItemScreenState extends State<FormItemScreen> {
       ownerName: _ownerNameController.text.trim(),
       ownerPhone: _ownerPhoneController.text.trim(),
       description: _descriptionController.text.trim(),
-      isAvailable: _isAvailable,
+      isAvailable: finalRooms > 0,
+      availableRooms: finalRooms,
+      genderRule: _genderRule,
+      marriageStatus: _marriageStatus,
+      maxOccupants: _maxOccupants,
     );
 
     if (isEditing) {
@@ -139,13 +159,28 @@ class _FormItemScreenState extends State<FormItemScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          isEditing ? 'Informasi kos berhasil diperbarui!' : 'Kos berhasil ditambahkan!',
+          isEditing
+              ? 'Informasi kos berhasil diperbarui!'
+              : 'Kos berhasil ditambahkan!',
         ),
       ),
     );
 
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
+    }
+  }
+
+  void _handleBackNavigation() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MainNavigationScreen(),
+        ),
+      );
     }
   }
 
@@ -157,34 +192,29 @@ class _FormItemScreenState extends State<FormItemScreen> {
     final isEditing = widget.itemToEdit != null;
 
     final selectedCategory = categories.any(
-      (category) => category.id == _selectedCategoryId,
+          (category) => category.id == _selectedCategoryId,
     )
         ? _selectedCategoryId
         : categories.firstOrNull?.id;
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _handleBackNavigation,
+        ),
         title: Text(isEditing ? 'Edit Informasi Kos' : 'Tambah Katalog Kos'),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            Text(
-              isEditing ? 'Perbarui informasi' : 'Tambah Katalog Kos',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.7,
-                  ),
-            ),
-            const SizedBox(height: 6),
             Text(
               'Lengkapi detail properti agar pencari kos dapat menemukan kos milikmu dengan mudah.',
               style: TextStyle(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
-
             if (_imageController.text.trim().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -194,7 +224,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   borderRadius: 20,
                 ),
               ),
-
             TextFormField(
               controller: _titleController,
               textCapitalization: TextCapitalization.words,
@@ -208,7 +237,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   : null,
             ),
             const SizedBox(height: 14),
-
             DropdownButtonFormField<String>(
               initialValue: selectedCategory,
               decoration: const InputDecoration(
@@ -218,17 +246,16 @@ class _FormItemScreenState extends State<FormItemScreen> {
               items: categories
                   .map(
                     (category) => DropdownMenuItem(
-                      value: category.id,
-                      child: Text(category.name),
-                    ),
-                  )
+                  value: category.id,
+                  child: Text(category.name),
+                ),
+              )
                   .toList(),
               onChanged: (value) => setState(() => _selectedCategoryId = value),
               validator: (value) =>
-                  value == null ? 'Pilih kategori kos.' : null,
+              value == null ? 'Pilih kategori kos.' : null,
             ),
             const SizedBox(height: 14),
-
             TextFormField(
               controller: _locationController,
               textCapitalization: TextCapitalization.words,
@@ -242,14 +269,13 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   : null,
             ),
             const SizedBox(height: 14),
-
-            // Google Maps Direct Coordinates
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: _latController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Latitude',
                       hintText: '3.5651',
@@ -261,7 +287,8 @@ class _FormItemScreenState extends State<FormItemScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _lngController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Longitude',
                       hintText: '98.6538',
@@ -272,7 +299,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
               ],
             ),
             const SizedBox(height: 14),
-
             TextFormField(
               controller: _priceController,
               decoration: const InputDecoration(
@@ -285,7 +311,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
                   : null,
             ),
             const SizedBox(height: 14),
-
             TextFormField(
               controller: _ownerNameController,
               decoration: const InputDecoration(
@@ -294,7 +319,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
               ),
             ),
             const SizedBox(height: 14),
-
             TextFormField(
               controller: _ownerPhoneController,
               keyboardType: TextInputType.phone,
@@ -304,7 +328,51 @@ class _FormItemScreenState extends State<FormItemScreen> {
               ),
             ),
             const SizedBox(height: 14),
-
+            const Text(
+              'Detail Aturan & Kapasitas Kamar (Kos Campur/Umum)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _genderRule,
+              decoration: const InputDecoration(
+                labelText: 'Aturan Gender Kamar / Area',
+                prefixIcon: Icon(Icons.people_outline_rounded),
+              ),
+              items: ['Campur / Bebas', 'Khusus Putra', 'Khusus Putri']
+                  .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                  .toList(),
+              onChanged: (val) => setState(() => _genderRule = val!),
+            ),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<String>(
+              value: _marriageStatus,
+              decoration: const InputDecoration(
+                labelText: 'Status Menikah (Pasutri)',
+                prefixIcon: Icon(Icons.family_restroom_outlined),
+              ),
+              items: ['Pasutri Diizinkan', 'Khusus Belum Menikah', 'Bebas']
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                  .toList(),
+              onChanged: (val) => setState(() => _marriageStatus = val!),
+            ),
+            const SizedBox(height: 14),
+            DropdownButtonFormField<String>(
+              value: _maxOccupants,
+              decoration: const InputDecoration(
+                labelText: 'Kapasitas Orang per Kamar',
+                prefixIcon: Icon(Icons.group_outlined),
+              ),
+              items: [
+                '1 Orang / Kamar',
+                '2 Orang / Kamar',
+                'Bebas (Maks 3 Orang)'
+              ]
+                  .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                  .toList(),
+              onChanged: (val) => setState(() => _maxOccupants = val!),
+            ),
+            const SizedBox(height: 14),
             TextFormField(
               controller: _descriptionController,
               maxLines: 3,
@@ -314,8 +382,6 @@ class _FormItemScreenState extends State<FormItemScreen> {
               ),
             ),
             const SizedBox(height: 18),
-
-            // Facilities selection chips
             Text(
               'Pilih Fasilitas Kos',
               style: Theme.of(context)
@@ -345,22 +411,48 @@ class _FormItemScreenState extends State<FormItemScreen> {
               }).toList(),
             ),
             const SizedBox(height: 18),
-
-            // Rating & Status Availability
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Status Kamar Tersedia'),
               subtitle: Text(
                 _isAvailable
-                    ? 'Kos dapat dipesan oleh pencari kos'
-                    : 'Kos ditandai penuh',
+                    ? 'Kos masih memiliki kamar kosong'
+                    : 'Kos ditandai penuh (0 kamar)',
               ),
               value: _isAvailable,
-              onChanged: (val) => setState(() => _isAvailable = val),
+              onChanged: (val) {
+                setState(() {
+                  _isAvailable = val;
+                  if (!val) {
+                    _availableRoomsController.text = '0';
+                  } else if ((int.tryParse(_availableRoomsController.text) ??
+                      0) <=
+                      0) {
+                    _availableRoomsController.text = '1';
+                  }
+                });
+              },
             ),
-
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _availableRoomsController,
+              enabled: _isAvailable,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Jumlah Kamar Kosong',
+                hintText: 'Contoh: 3',
+                prefixIcon: Icon(Icons.meeting_room_outlined),
+              ),
+              validator: (value) {
+                if (!_isAvailable) return null;
+                final count = int.tryParse(value?.trim() ?? '');
+                if (count == null || count < 1) {
+                  return 'Masukkan jumlah kamar kosong minimal 1.';
+                }
+                return null;
+              },
+            ),
             const SizedBox(height: 14),
-
             TextFormField(
               controller: _imageController,
               keyboardType: TextInputType.url,
@@ -372,11 +464,11 @@ class _FormItemScreenState extends State<FormItemScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             FilledButton.icon(
               onPressed: _saveForm,
               icon: Icon(isEditing ? Icons.save_outlined : Icons.add_rounded),
-              label: Text(isEditing ? 'Simpan Perubahan' : 'Simpan Katalog Kos'),
+              label:
+              Text(isEditing ? 'Simpan Perubahan' : 'Simpan Katalog Kos'),
             ),
           ],
         ),
