@@ -8,6 +8,7 @@ import '../models/message_model.dart';
 import '../models/review_model.dart';
 import '../models/user_role.dart';
 import '../providers/app_state.dart';
+import '../services/firebase_service.dart';
 import '../widgets/kost_image.dart';
 import 'form_item_screen.dart';
 
@@ -158,7 +159,8 @@ class DetailScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 48,
                   child: FilledButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      // 1. Simpan ke AppState lokal
                       appState.addBooking(
                         BookingModel(
                           id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -176,12 +178,34 @@ class DetailScreen extends StatelessWidget {
                           createdAt: DateTime.now(),
                         ),
                       );
+
+                      // 2. Kirim ke Firestore (Collection bookings)
+                      try {
+                        await FirebaseService().submitBooking(
+                          kostId: currentItem.id,
+                          kostName: currentItem.title,
+                          seekerId: appState.currentUser.id,
+                          seekerName: userName,
+                          seekerEmail: userEmail,
+                          ownerId: currentItem.ownerId.isNotEmpty
+                              ? currentItem.ownerId
+                              : 'owner_default',
+                          price: currentItem.price,
+                        );
+                      } catch (e) {
+                        print('Gagal kirim ke Firestore: $e');
+                      }
+
                       Navigator.pop(sheetContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
                             content: Text(
-                                'Pengajuan sewa beserta data preferensi terkirim ke pemilik!')),
-                      );
+                                'Pengajuan sewa berhasil dikirim ke Cloud Firestore!'),
+                            backgroundColor: Color(0xFF2D6A4F),
+                          ),
+                        );
+                      }
                     },
                     child: const Text('Kirim Pengajuan Sewa'),
                   ),
@@ -453,7 +477,6 @@ class DetailScreen extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final appState = context.watch<AppState>();
 
-// Ambil data kos terbaru dari AppState agar perubahan jumlah kamar langsung terupdate
     final currentItem = appState.items.firstWhere(
           (k) => k.id == item.id,
       orElse: () => item,
@@ -476,7 +499,6 @@ class DetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Detail kos'),
         actions: [
-// Tombol Share
           IconButton(
             tooltip: 'Bagikan kos',
             icon: const Icon(Icons.share_outlined),
@@ -485,7 +507,6 @@ class DetailScreen extends StatelessWidget {
                   'Cek kos ${currentItem.title} di ${currentItem.location} - Harga: ${currentItem.price}. Temukan di Finding Kost!');
             },
           ),
-// Jika Pemilik Kost: Tampilkan tombol Edit & Hapus
           if (isOwner) ...[
             IconButton(
               tooltip: 'Edit informasi kos',
@@ -502,9 +523,7 @@ class DetailScreen extends StatelessWidget {
               icon: const Icon(Icons.delete_outline_rounded),
               onPressed: () => _showDeleteDialog(context, currentItem),
             ),
-          ]
-// Jika Pencari Kost: Tampilkan tombol Simpan/Favorit
-          else ...[
+          ] else ...[
             IconButton(
               tooltip: isFavorite ? 'Hapus dari tersimpan' : 'Simpan ke favorit',
               icon: Icon(
@@ -521,8 +540,8 @@ class DetailScreen extends StatelessWidget {
                     content: Text(
                       saved
                           ? isFavorite
-                                ? 'Dihapus dari kos tersimpan'
-                                : 'Disimpan ke kos tersimpan'
+                          ? 'Dihapus dari kos tersimpan'
+                          : 'Disimpan ke kos tersimpan'
                           : 'Perubahan favorit gagal disimpan',
                     ),
                     duration: const Duration(seconds: 2),
@@ -564,7 +583,6 @@ class DetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-// Badge Status Ketersediaan Kamar di atas gambar
               Positioned(
                 right: 14,
                 top: 14,
@@ -646,8 +664,6 @@ class DetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-
-// KARTU INFORMASI KETERSEDIAAN & JUMLAH KAMAR KOSONG
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
@@ -732,7 +748,6 @@ class DetailScreen extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(18),
@@ -793,8 +808,6 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-
-// TOMBOL AJUKAN SEWA / BOOKING & CHAT PEMILIK
           if (!isOwner) ...[
             Row(
               children: [
@@ -839,7 +852,6 @@ class DetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 22),
           ],
-
           Text(
             'Tentang tempat ini',
             style: Theme.of(context)
@@ -856,8 +868,6 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-
-// FASILITAS KOS
           if (currentItem.facilities.isNotEmpty) ...[
             Text(
               'Fasilitas tersedia',
@@ -885,8 +895,6 @@ class DetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 22),
           ],
-
-// ULASAN & RATING SECTION
           Row(
             children: [
               Text(

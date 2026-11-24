@@ -86,6 +86,60 @@ class FirebaseService {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // 3. BOOKING / PENGAJUAN SEWA OPERATIONS
+  // ---------------------------------------------------------------------------
+
+  /// Mengajukan sewa kos baru (disimpan ke collection 'bookings')
+  Future<String?> submitBooking({
+    required String kostId,
+    required String kostName,
+    required String seekerId,
+    required String seekerName,
+    required String seekerEmail,
+    required String ownerId,
+    required dynamic price,
+  }) async {
+    try {
+      final docRef = await _firestore.collection('bookings').add({
+        'kostId': kostId,
+        'kostName': kostName,
+        'seekerId': seekerId,
+        'seekerName': seekerName,
+        'seekerEmail': seekerEmail,
+        'ownerId': ownerId,
+        'price': price,
+        'status': 'pending', // Status awal: menunggu persetujuan pemilik
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (e) {
+      print('Error submitting booking: $e');
+      return null;
+    }
+  }
+
+  /// Mengambil daftar pengajuan sewa secara real-time untuk Pemilik Kos
+  Stream<QuerySnapshot> getBookingsStream() {
+    return _firestore
+        .collection('bookings')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  /// Memperbarui status pengajuan sewa (approved / rejected)
+  Future<bool> updateBookingStatus(String bookingId, String status) async {
+    try {
+      await _firestore.collection('bookings').doc(bookingId).update({
+        'status': status,
+      });
+      return true;
+    } catch (e) {
+      print('Error updating booking status: $e');
+      return false;
+    }
+  }
+
 
   // ---------------------------------------------------------------------------
   // HELPER METHODS (MAPPING)
