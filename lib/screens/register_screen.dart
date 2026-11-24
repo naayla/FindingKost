@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_role.dart';
 import '../providers/app_state.dart';
 
@@ -38,30 +39,68 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_name', _nameController.text.trim());
-    await prefs.setString('user_email', _emailController.text.trim());
-    await prefs.setString('user_password', _passwordController.text.trim());
-    await prefs.setString('user_phone', _phoneController.text.trim());
-    await prefs.setString(
-      'user_role',
-      _selectedRole == UserRole.pemilikKost ? 'pemilik' : 'pencari',
-    );
-    await prefs.setString(
-      'user_institution',
-      _institutionController.text.trim().isNotEmpty
-          ? _institutionController.text.trim()
-          : (_selectedRole == UserRole.pemilikKost ? 'Pemilik Kos Mandiri' : ''),
-    );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pendaftaran berhasil! Silakan masuk dengan akun baru.'),
-          backgroundColor: Color(0xFF2D6A4F),
-        ),
+    try {
+      // 1. Proses daftar akun ke Firebase Authentication
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
-      Navigator.pop(context);
+
+      // 2. Simpan data tambahan ke SharedPreferences untuk lokal aplikasi
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_name', _nameController.text.trim());
+      await prefs.setString('user_email', _emailController.text.trim());
+      await prefs.setString('user_password', _passwordController.text.trim());
+      await prefs.setString('user_phone', _phoneController.text.trim());
+      await prefs.setString(
+        'user_role',
+        _selectedRole == UserRole.pemilikKost ? 'pemilik' : 'pencari',
+      );
+      await prefs.setString(
+        'user_institution',
+        _institutionController.text.trim().isNotEmpty
+            ? _institutionController.text.trim()
+            : (_selectedRole == UserRole.pemilikKost ? 'Pemilik Kos Mandiri' : ''),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pendaftaran berhasil! Akun sudah terdaftar di Firebase.'),
+            backgroundColor: Color(0xFF2D6A4F),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Pendaftaran gagal';
+      if (e.code == 'weak-password') {
+        message = 'Kata sandi terlalu lemah.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'Email sudah terdaftar di sistem.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Format email tidak valid.';
+      } else {
+        message = e.message ?? 'Terjadi kesalahan.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -78,22 +117,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         decoration: BoxDecoration(
           gradient: isDarkMode
               ? LinearGradient(
-                  colors: [
-                    colors.surface,
-                    colors.surfaceContainer,
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                )
+            colors: [
+              colors.surface,
+              colors.surfaceContainer,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          )
               : const LinearGradient(
-                  colors: [
-                    Color(0xFFE2EBE4),
-                    Color(0xFFF7F0E6),
-                    Color(0xFFFAF8F5),
-                  ],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                ),
+            colors: [
+              Color(0xFFE2EBE4),
+              Color(0xFFF7F0E6),
+              Color(0xFFFAF8F5),
+            ],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
         ),
         child: SafeArea(
           child: Column(
@@ -185,28 +224,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           Expanded(
                                             child: GestureDetector(
                                               onTap: () => setState(() =>
-                                                  _selectedRole =
-                                                      UserRole.pencariKost),
+                                              _selectedRole =
+                                                  UserRole.pencariKost),
                                               child: Container(
                                                 alignment: Alignment.center,
                                                 decoration: BoxDecoration(
                                                   color: _selectedRole ==
-                                                          UserRole.pencariKost
+                                                      UserRole.pencariKost
                                                       ? colors.primary
                                                       : Colors.transparent,
                                                   borderRadius:
-                                                      BorderRadius.circular(19),
+                                                  BorderRadius.circular(19),
                                                 ),
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                                  MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons.search_rounded,
                                                       size: 16,
                                                       color: _selectedRole ==
-                                                              UserRole
-                                                                  .pencariKost
+                                                          UserRole
+                                                              .pencariKost
                                                           ? colors.onPrimary
                                                           : colors.onSurface,
                                                     ),
@@ -216,10 +255,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                       style: TextStyle(
                                                         fontSize: 12,
                                                         fontWeight:
-                                                            FontWeight.w700,
+                                                        FontWeight.w700,
                                                         color: _selectedRole ==
-                                                                UserRole
-                                                                    .pencariKost
+                                                            UserRole
+                                                                .pencariKost
                                                             ? colors.onPrimary
                                                             : colors.onSurface,
                                                       ),
@@ -232,28 +271,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           Expanded(
                                             child: GestureDetector(
                                               onTap: () => setState(() =>
-                                                  _selectedRole =
-                                                      UserRole.pemilikKost),
+                                              _selectedRole =
+                                                  UserRole.pemilikKost),
                                               child: Container(
                                                 alignment: Alignment.center,
                                                 decoration: BoxDecoration(
                                                   color: _selectedRole ==
-                                                          UserRole.pemilikKost
+                                                      UserRole.pemilikKost
                                                       ? colors.primary
                                                       : Colors.transparent,
                                                   borderRadius:
-                                                      BorderRadius.circular(19),
+                                                  BorderRadius.circular(19),
                                                 ),
                                                 child: Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                                  MainAxisAlignment.center,
                                                   children: [
                                                     Icon(
                                                       Icons.storefront_rounded,
                                                       size: 16,
                                                       color: _selectedRole ==
-                                                              UserRole
-                                                                  .pemilikKost
+                                                          UserRole
+                                                              .pemilikKost
                                                           ? colors.onPrimary
                                                           : colors.onSurface,
                                                     ),
@@ -263,10 +302,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                       style: TextStyle(
                                                         fontSize: 12,
                                                         fontWeight:
-                                                            FontWeight.w700,
+                                                        FontWeight.w700,
                                                         color: _selectedRole ==
-                                                                UserRole
-                                                                    .pemilikKost
+                                                            UserRole
+                                                                .pemilikKost
                                                             ? colors.onPrimary
                                                             : colors.onSurface,
                                                       ),
@@ -288,7 +327,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           ? 'Nama tidak boleh kosong'
                                           : null,
                                       decoration: InputDecoration(
-
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,
@@ -321,7 +359,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         return null;
                                       },
                                       decoration: InputDecoration(
-
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,
@@ -404,7 +441,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         return null;
                                       },
                                       decoration: InputDecoration(
-
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,
@@ -451,7 +487,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         return null;
                                       },
                                       decoration: InputDecoration(
-
                                         contentPadding:
                                         const EdgeInsets.symmetric(
                                           vertical: 14,
